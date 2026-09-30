@@ -117,6 +117,10 @@ Il dettaglio è in `CONTRIBUTING.md`. Il minimo sindacale:
    If a push fails, report the precise blocker and retain the local commit;
    never claim publication succeeded. Do not force-push, replace remote history,
    or bypass the main/PR workflow to make the push succeed.
+   If Git CLI credentials are unavailable but an authorized GitHub connection
+   can publish the work, use its supported write tools, record any rewritten
+   commit hashes/provenance, and synchronize the local working branch with the
+   published branch. Never expose access tokens in files, commands or logs.
 
 ## 5. Verifiche rapide
 

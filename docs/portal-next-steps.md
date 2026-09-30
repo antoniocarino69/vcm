@@ -27,8 +27,10 @@ remains deferred until explicitly requested. Keep the portal on `0.0.0.0:8080`.
   backend regression coverage. Deduplication is per environment and does not
   merge different servers or different scanners solely because they share a CVE.
 
-The checkbox evidence above records completed local work; all these commits
-are also ancestors of this documentation branch and are published with it.
+The checkbox evidence above records the original local revisions. Initial
+publication through the authenticated GitHub connection recreates these atomic
+commits with new remote hashes; `Local-Commit` trailers preserve their source
+revision. Use the published branch for work on other computers.
 
 ## A. Shared sidebar and interface redesign — #0019
 
