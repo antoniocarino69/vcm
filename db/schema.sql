@@ -48,6 +48,8 @@ CREATE TABLE environments (
     UNIQUE (tenant_id, name)
 );
 CREATE INDEX environments_tags_idx ON environments USING gin (tags);
+-- Composite key target for tenant-scoped child references (see db/migrations/).
+CREATE UNIQUE INDEX environments_id_tenant_uidx ON environments (id, tenant_id);
 
 -- -----------------------------------------------------------------------------
 -- 2. Asset & Host Management
@@ -75,16 +77,29 @@ CREATE INDEX assets_ip_idx          ON assets (tenant_id, ip);
 CREATE INDEX assets_fqdn_idx        ON assets (tenant_id, lower(fqdn));
 CREATE INDEX assets_netbios_idx     ON assets (tenant_id, lower(hostname_netbios));
 CREATE INDEX assets_tags_idx        ON assets USING gin (tags);
+CREATE UNIQUE INDEX assets_id_tenant_uidx ON assets (id, tenant_id);
 
 -- Spostamenti asset tra ambienti: lo storico scansioni/commenti è preservato
 -- perché findings/scan_imports conservano environment_id dello snapshot.
 CREATE TABLE asset_moves (
     id                 bigserial PRIMARY KEY,
-    asset_id           uuid NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
-    from_environment_id uuid REFERENCES environments(id) ON DELETE SET NULL,
-    to_environment_id   uuid NOT NULL REFERENCES environments(id) ON DELETE RESTRICT,
+    tenant_id          uuid NOT NULL CONSTRAINT asset_moves_tenant_fkey
+                       REFERENCES tenants(id) ON DELETE CASCADE,
+    asset_id           uuid NOT NULL,
+    from_environment_id uuid,
+    to_environment_id   uuid NOT NULL,
     moved_at           timestamptz NOT NULL DEFAULT now(),
-    reason             text
+    reason             text,
+    -- Composite keys: a move row can never mix two clients.
+    CONSTRAINT asset_moves_asset_tenant_fkey
+        FOREIGN KEY (asset_id, tenant_id) REFERENCES assets (id, tenant_id)
+        ON DELETE CASCADE,
+    CONSTRAINT asset_moves_from_environment_tenant_fkey
+        FOREIGN KEY (from_environment_id, tenant_id) REFERENCES environments (id, tenant_id)
+        ON DELETE SET NULL (from_environment_id),
+    CONSTRAINT asset_moves_to_environment_tenant_fkey
+        FOREIGN KEY (to_environment_id, tenant_id) REFERENCES environments (id, tenant_id)
+        ON DELETE RESTRICT
 );
 CREATE INDEX asset_moves_asset_idx ON asset_moves (asset_id, moved_at DESC);
 
@@ -93,8 +108,9 @@ CREATE INDEX asset_moves_asset_idx ON asset_moves (asset_id, moved_at DESC);
 -- -----------------------------------------------------------------------------
 CREATE TABLE scan_imports (
     id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id      uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    environment_id uuid NOT NULL REFERENCES environments(id) ON DELETE RESTRICT,
+    tenant_id      uuid NOT NULL CONSTRAINT scan_imports_tenant_fkey
+                   REFERENCES tenants(id) ON DELETE CASCADE,
+    environment_id uuid NOT NULL,
     scanner        scanner_type NOT NULL,
     filename       text NOT NULL,
     content_sha256 char(64) NOT NULL,
@@ -108,9 +124,13 @@ CREATE TABLE scan_imports (
     finished_at    timestamptz,
     created_by     text,                                -- subject esterno (auth futuro)
     created_at     timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (tenant_id, content_sha256)
+    UNIQUE (tenant_id, content_sha256),
+    CONSTRAINT scan_imports_environment_tenant_fkey
+        FOREIGN KEY (environment_id, tenant_id) REFERENCES environments (id, tenant_id)
+        ON DELETE RESTRICT
 );
 CREATE INDEX scan_imports_env_idx ON scan_imports (environment_id, created_at DESC);
+CREATE UNIQUE INDEX scan_imports_id_tenant_uidx ON scan_imports (id, tenant_id);
 
 -- -----------------------------------------------------------------------------
 -- 4. Findings unificati: vulnerabilità (Qualys/Nessus) e compliance (SCC/STIG,
@@ -118,9 +138,10 @@ CREATE INDEX scan_imports_env_idx ON scan_imports (environment_id, created_at DE
 -- -----------------------------------------------------------------------------
 CREATE TABLE findings (
     id             bigserial PRIMARY KEY,
-    tenant_id      uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    asset_id       uuid NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
-    environment_id uuid NOT NULL REFERENCES environments(id) ON DELETE RESTRICT, -- snapshot a frontiera import
+    tenant_id      uuid NOT NULL CONSTRAINT findings_tenant_fkey
+                   REFERENCES tenants(id) ON DELETE CASCADE,
+    asset_id       uuid NOT NULL,
+    environment_id uuid NOT NULL, -- snapshot a frontiera import
     kind           finding_kind NOT NULL,
 
     scanner        scanner_type NOT NULL,
@@ -152,9 +173,9 @@ CREATE TABLE findings (
     first_seen     timestamptz NOT NULL DEFAULT now(),
     last_seen      timestamptz NOT NULL DEFAULT now(),
     occurrence_count integer NOT NULL DEFAULT 1,
-    last_import_id uuid REFERENCES scan_imports(id) ON DELETE SET NULL,
+    last_import_id uuid,
     closed_at      timestamptz,
-    closed_by_import_id uuid REFERENCES scan_imports(id) ON DELETE SET NULL,
+    closed_by_import_id uuid,
     status_reason  text,                   -- note su FP / risk accepted / mitigazione
     risk_accepted_until date,
     raw            jsonb NOT NULL DEFAULT '{}'::jsonb,  -- nodo XML/CSV originale
@@ -172,11 +193,25 @@ CREATE TABLE findings (
     CONSTRAINT findings_open_iff_active CHECK (
         (status = 'active' AND closed_at IS NULL)
         OR (status <> 'active' AND closed_at IS NOT NULL)
-    )
+    ),
+    -- Composite keys keep findings, assets, snapshots and imports on one client.
+    CONSTRAINT findings_asset_tenant_fkey
+        FOREIGN KEY (asset_id, tenant_id) REFERENCES assets (id, tenant_id)
+        ON DELETE CASCADE,
+    CONSTRAINT findings_environment_tenant_fkey
+        FOREIGN KEY (environment_id, tenant_id) REFERENCES environments (id, tenant_id)
+        ON DELETE RESTRICT,
+    CONSTRAINT findings_last_import_tenant_fkey
+        FOREIGN KEY (last_import_id, tenant_id) REFERENCES scan_imports (id, tenant_id)
+        ON DELETE SET NULL (last_import_id),
+    CONSTRAINT findings_closed_by_import_tenant_fkey
+        FOREIGN KEY (closed_by_import_id, tenant_id) REFERENCES scan_imports (id, tenant_id)
+        ON DELETE SET NULL (closed_by_import_id)
 );
 
 -- Deduplica: un finding identificativo per ambiente vive una sola volta.
 CREATE UNIQUE INDEX findings_dedup_uidx   ON findings (environment_id, dedup_hash);
+CREATE UNIQUE INDEX findings_id_tenant_uidx ON findings (id, tenant_id);
 CREATE INDEX findings_asset_scanner_idx   ON findings (asset_id, scanner, status);
 CREATE INDEX findings_severity_idx        ON findings (tenant_id, severity) WHERE status = 'active';
 CREATE INDEX findings_cves_idx            ON findings USING gin (cves);
@@ -186,22 +221,35 @@ CREATE INDEX findings_rule_idx            ON findings (scanner, rule_id);
 -- Storico transizioni di stato (Active -> Mitigated / FP / Risk Accepted)
 CREATE TABLE finding_status_history (
     id          bigserial PRIMARY KEY,
-    finding_id  bigint NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    tenant_id   uuid NOT NULL CONSTRAINT finding_status_history_tenant_fkey
+                REFERENCES tenants(id) ON DELETE CASCADE,
+    finding_id  bigint NOT NULL,
     from_status finding_status,
     to_status   finding_status NOT NULL,
     reason      text,
-    import_id   uuid REFERENCES scan_imports(id) ON DELETE SET NULL,
+    import_id   uuid,
     changed_by  text,
-    changed_at  timestamptz NOT NULL DEFAULT now()
+    changed_at  timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT finding_status_history_finding_tenant_fkey
+        FOREIGN KEY (finding_id, tenant_id) REFERENCES findings (id, tenant_id)
+        ON DELETE CASCADE,
+    CONSTRAINT finding_status_history_import_tenant_fkey
+        FOREIGN KEY (import_id, tenant_id) REFERENCES scan_imports (id, tenant_id)
+        ON DELETE SET NULL (import_id)
 );
 CREATE INDEX finding_status_history_idx ON finding_status_history (finding_id, changed_at DESC);
 
 CREATE TABLE finding_comments (
     id         bigserial PRIMARY KEY,
-    finding_id bigint NOT NULL REFERENCES findings(id) ON DELETE CASCADE,
+    tenant_id  uuid NOT NULL CONSTRAINT finding_comments_tenant_fkey
+               REFERENCES tenants(id) ON DELETE CASCADE,
+    finding_id bigint NOT NULL,
     author     text NOT NULL,
     body       text NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT now()
+    created_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT finding_comments_finding_tenant_fkey
+        FOREIGN KEY (finding_id, tenant_id) REFERENCES findings (id, tenant_id)
+        ON DELETE CASCADE
 );
 
 -- -----------------------------------------------------------------------------
@@ -209,15 +257,25 @@ CREATE TABLE finding_comments (
 -- -----------------------------------------------------------------------------
 CREATE TABLE ad_health_snapshots (
     id            bigserial PRIMARY KEY,
-    tenant_id     uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    environment_id uuid NOT NULL REFERENCES environments(id) ON DELETE CASCADE,
-    asset_id      uuid REFERENCES assets(id) ON DELETE SET NULL,  -- DC / dominio a cui si riferisce
+    tenant_id     uuid NOT NULL CONSTRAINT ad_health_snapshots_tenant_fkey
+                  REFERENCES tenants(id) ON DELETE CASCADE,
+    environment_id uuid NOT NULL,
+    asset_id      uuid,  -- DC / dominio a cui si riferisce
     tool          scanner_type NOT NULL CHECK (tool IN ('pingcastle', 'purple_knight')),
     global_score  numeric(5,2),                 -- PingCastle: 0-100 (più alto = peggio)
     category_scores jsonb NOT NULL DEFAULT '{}'::jsonb, -- {"Privileged Accounts":45,"Trust":10,...}
     snapshot_at   timestamptz NOT NULL DEFAULT now(),
-    import_id     uuid REFERENCES scan_imports(id) ON DELETE SET NULL,
-    raw           jsonb NOT NULL DEFAULT '{}'::jsonb
+    import_id     uuid,
+    raw           jsonb NOT NULL DEFAULT '{}'::jsonb,
+    CONSTRAINT ad_health_environment_tenant_fkey
+        FOREIGN KEY (environment_id, tenant_id) REFERENCES environments (id, tenant_id)
+        ON DELETE CASCADE,
+    CONSTRAINT ad_health_asset_tenant_fkey
+        FOREIGN KEY (asset_id, tenant_id) REFERENCES assets (id, tenant_id)
+        ON DELETE SET NULL (asset_id),
+    CONSTRAINT ad_health_import_tenant_fkey
+        FOREIGN KEY (import_id, tenant_id) REFERENCES scan_imports (id, tenant_id)
+        ON DELETE SET NULL (import_id)
 );
 CREATE INDEX ad_health_idx ON ad_health_snapshots (environment_id, snapshot_at DESC);
 
@@ -226,8 +284,9 @@ CREATE INDEX ad_health_idx ON ad_health_snapshots (environment_id, snapshot_at D
 -- -----------------------------------------------------------------------------
 CREATE TABLE report_jobs (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id   uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    environment_id uuid REFERENCES environments(id) ON DELETE CASCADE, -- NULL = tutti gli ambienti
+    tenant_id   uuid NOT NULL CONSTRAINT report_jobs_tenant_fkey
+                REFERENCES tenants(id) ON DELETE CASCADE,
+    environment_id uuid, -- NULL = tutti gli ambienti
     kind        report_kind NOT NULL,
     format      report_format NOT NULL DEFAULT 'html',
     status      report_status NOT NULL DEFAULT 'pending',
@@ -236,7 +295,10 @@ CREATE TABLE report_jobs (
     error       text,
     requested_by text,
     created_at  timestamptz NOT NULL DEFAULT now(),
-    finished_at timestamptz
+    finished_at timestamptz,
+    CONSTRAINT report_jobs_environment_tenant_fkey
+        FOREIGN KEY (environment_id, tenant_id) REFERENCES environments (id, tenant_id)
+        ON DELETE CASCADE
 );
 
 -- -----------------------------------------------------------------------------
