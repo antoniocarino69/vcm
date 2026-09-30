@@ -152,16 +152,27 @@ unverified and open; the broader redesign is not complete.
   Read-only identities/current attributes, paginated finding snapshots/moves and
   proven latest/closure import references delivered in `790c70b`; complete import
   observation coverage remains #0020, so this full-history item stays open.
-- [ ] Implement a vulnerability list where each row identifies one finding on
+- [x] Implement a vulnerability list where each row identifies one finding on
   one asset, with client/environment, asset, OS, rule/CVE, severity, status,
   tags, scanner, port and first/last observation.
-- [ ] Implement the individual finding page: asset context, rule, original/normalized
+  — `feature/0014-finding-workflow`; `/vulnerabilities.html` with client/
+  environment scope, status/severity/scanner/type/text filters applied before
+  pagination, and one row per finding/asset/port.
+- [x] Implement the individual finding page: asset context, rule, original/normalized
   severity, CVSS/CVEs, description, solution, scanner evidence, observation dates,
   provenance, comments, tags and status history.
-- [ ] Support Open, Mitigated, False positive and Risk accepted through the existing
+  — `/finding.html` shows asset context and tags, normalized plus scanner
+  severity, CVSS/CVEs, description/solution, raw scanner output, first/last
+  observation, proven latest/closure imports, comments and status history.
+- [x] Support Open, Mitigated, False positive and Risk accepted through the existing
   status values; collect a reason and optional acceptance expiry as appropriate.
-- [ ] Verify that accepting rule X on server A leaves rule X on server B unchanged.
+  — decision form on the finding page; risk acceptance requires a reason and
+  accepts an optional expiry date; every change is recorded in status history.
+- [x] Verify that accepting rule X on server A leaves rule X on server B unchanged.
   Also verify that changing one port-specific finding does not change another.
+  — PostgreSQL regression (same rule on two ports of one asset and on another
+  client's asset) plus a live UI→API run where QID 105575 on server A was
+  accepted while the sibling server's finding stayed active.
 - [ ] Add safe bulk actions in a separate increment: explicit selected finding IDs,
   tenant checks for every ID, bounded batches and a visible outcome summary.
 

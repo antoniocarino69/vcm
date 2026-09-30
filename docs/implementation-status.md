@@ -170,3 +170,23 @@ observed failing, then passing; the four existing browser suites pass after
 form-scoped selector updates; a live UI↔API flow on the real stack created,
 edited and re-read a temporary client and environment (including mobile at
 390px); temporary records removed.
+
+## Individual finding workflow increment (#0014 P3b)
+
+`/vulnerabilities.html` lists one row per finding/asset/port with client/
+environment scope, text/status/severity/scanner/type filters applied before
+pagination, and return-position preservation. `/finding.html` renders the
+asset context and tags, normalized plus scanner severity, CVSS/CVEs,
+description and solution, raw scanner evidence, first/last observation,
+proven latest/closure imports, comments and full status history. The decision
+form supports Open/Mitigated/False positive/Risk accepted on the existing
+status values with a reason (mandatory for risk acceptance) and an optional
+acceptance expiry; each decision targets exactly one finding ID.
+
+Verification: backend regressions written first and observed failing (3
+failed: list shape, filters, detail provenance), then 48 passed with
+PostgreSQL including per-asset and per-port decision independence; the new
+`frontend/tests/findings.browser.cjs` and all five existing browser suites
+pass; a live run uploaded a real Qualys export and accepted QID 105575 on one
+server through the portal while the sibling server's finding stayed active.
+Bulk actions remain a separate increment (#0014 P3c).
