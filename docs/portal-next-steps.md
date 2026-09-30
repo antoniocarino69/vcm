@@ -7,7 +7,8 @@ This document refines the earlier plan; it does not mark missing features ready.
 
 ## How to maintain this document
 
-Check a box only after the increment has been implemented, verified and pushed.
+Check an implementation box only after the increment has been implemented and verified.
+Publication is tracked separately and is required before session handoff is complete.
 Add the commit/PR and verification evidence beside the checked item. If only
 part of an issue is delivered, check that part and leave the issue open for
 the remainder. Ship complete workflows in small increments. Authentication
@@ -27,10 +28,19 @@ remains deferred until explicitly requested. Keep the portal on `0.0.0.0:8080`.
   backend regression coverage. Deduplication is per environment and does not
   merge different servers or different scanners solely because they share a CVE.
 
-The checkbox evidence above records the original local revisions. Initial
-publication through the authenticated GitHub connection recreates these atomic
-commits with new remote hashes; `Local-Commit` trailers preserve their source
-revision. Use the published branch for work on other computers.
+The checkbox evidence above records completed local revisions. Publication is
+currently blocked; these commits have not yet been pushed to GitHub.
+
+- [ ] Publish completed work and verify the remote branch hash — #0024.
+
+Remote `origin` is configured as `https://github.com/antoniocarino69/vcm.git`.
+Its initial `main` contained only LICENSE with an independent history; that
+commit was merged into the local working branch without changing remote main.
+HTTPS CLI push failed because no Git credentials are configured. The connected
+GitHub integration also rejected Git tree creation with HTTP 403. No remote
+feature/documentation branch was created and no local hashes were rewritten.
+Resume publication after configuring Git HTTPS credentials or authorized SSH
+access; never paste secrets into chat, repository files or command output.
 
 ## A. Shared sidebar and interface redesign — #0019
 

@@ -6,6 +6,10 @@ The active product checklist is [portal-next-steps.md](portal-next-steps.md).
 It includes sidebar redesign, individual asset/finding workflows, optional
 scan dates/tags, OS/tag filters and separate VA/remediation campaigns.
 
+Origin is configured to `https://github.com/antoniocarino69/vcm.git`, but initial
+publication is blocked by GitHub authentication (#0024). Completed work remains
+committed locally; remote main was not overwritten.
+
 ## Completed increments
 
 | Issue | Result | Verification |
