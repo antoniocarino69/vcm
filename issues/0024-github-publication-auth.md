@@ -26,5 +26,8 @@ Do not store or log tokens/keys or ask for them in chat.
 - fix/0008-dashboard-rendering-context
 
 ## Status
-- Open; blocked by missing GitHub write authentication
-- All work is committed locally; no remote branch publication succeeded
+- Closed
+- Resolution: the existing SSH key was already authorized for antoniocarino69.
+  Switched origin to SSH and successfully pushed all six listed branches,
+  preserving original commit hashes and enabling upstream tracking.
+- Closed by `docs(repo): record successful SSH publication`

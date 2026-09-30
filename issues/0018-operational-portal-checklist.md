@@ -17,5 +17,5 @@ implemented schema/API behavior. Record scanner format sources and evidence gaps
 - Delivered: docs/portal-next-steps.md, linked issues #0019–#0023, updated
   existing portal issues and AGENTS.md product/reference/push instructions.
 - Closed by `docs(portal): add scoped workflow and interface checklist`
-- Documentation delivery is complete; session publication remains blocked
-  and is tracked independently in #0024. No push success is claimed.
+- Documentation delivery and session publication are complete. SSH resolved
+  the initial authentication blocker recorded in #0024.

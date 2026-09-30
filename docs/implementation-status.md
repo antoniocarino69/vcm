@@ -6,9 +6,11 @@ The active product checklist is [portal-next-steps.md](portal-next-steps.md).
 It includes sidebar redesign, individual asset/finding workflows, optional
 scan dates/tags, OS/tag filters and separate VA/remediation campaigns.
 
-Origin is configured to `https://github.com/antoniocarino69/vcm.git`, but initial
-publication is blocked by GitHub authentication (#0024). Completed work remains
-committed locally; remote main was not overwritten.
+Origin is configured to `git@github.com:antoniocarino69/vcm.git`. Initial
+publication succeeded through the existing authorized SSH key (#0024).
+All six completed working branches are published with upstream tracking;
+remote main was not overwritten. The complete current work is on
+`docs/0018-operational-portal-checklist` until PR review/merge.
 
 ## Completed increments
 

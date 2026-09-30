@@ -28,19 +28,20 @@ remains deferred until explicitly requested. Keep the portal on `0.0.0.0:8080`.
   backend regression coverage. Deduplication is per environment and does not
   merge different servers or different scanners solely because they share a CVE.
 
-The checkbox evidence above records completed local revisions. Publication is
-currently blocked; these commits have not yet been pushed to GitHub.
+The checkbox evidence above records completed revisions, now published to GitHub
+with their original commit hashes.
 
-- [ ] Publish completed work and verify the remote branch hash — #0024.
+- [x] Publish completed work and verify the remote branch hash — #0024;
+  SSH authentication succeeded and all six completed working branches were pushed.
 
-Remote `origin` is configured as `https://github.com/antoniocarino69/vcm.git`.
+Remote `origin` is configured as `git@github.com:antoniocarino69/vcm.git`.
 Its initial `main` contained only LICENSE with an independent history; that
 commit was merged into the local working branch without changing remote main.
-HTTPS CLI push failed because no Git credentials are configured. The connected
-GitHub integration also rejected Git tree creation with HTTP 403. No remote
-feature/documentation branch was created and no local hashes were rewritten.
-Resume publication after configuring Git HTTPS credentials or authorized SSH
-access; never paste secrets into chat, repository files or command output.
+HTTPS CLI push initially failed due to missing HTTPS credentials; the GitHub
+integration also rejected Git tree creation with HTTP 403. The existing local
+SSH key was already authorized, so switching origin to SSH resolved publication
+without rewriting history. Never paste private keys/tokens into chat, repository
+files or command output.
 
 ## A. Shared sidebar and interface redesign — #0019
 
