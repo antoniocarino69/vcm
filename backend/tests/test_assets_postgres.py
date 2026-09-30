@@ -43,7 +43,7 @@ def inventory_data() -> Iterator[tuple]:
                 asset = db.scalar(select(Asset).where(Asset.tenant_id == env.tenant_id, Asset.ip == f'192.0.2.{i+1}'))
                 asset.tags = {'tier':'critical' if i in (0,4) else 'standard'}
                 assets.append(asset)
-            db.add(AssetMove(asset_id=assets[0].id,from_environment_id=envs[0].id,to_environment_id=envs[1].id,reason='Retain snapshots'))
+            db.add(AssetMove(tenant_id=assets[0].tenant_id,asset_id=assets[0].id,from_environment_id=envs[0].id,to_environment_id=envs[1].id,reason='Retain snapshots'))
             assets[0].environment_id = envs[1].id
             db.flush()
             yield db, tenants, envs, assets, scans

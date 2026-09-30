@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Iterator
 
 import pytest
+from fastapi import HTTPException
 
 sqlalchemy = pytest.importorskip("sqlalchemy")
 from sqlalchemy import create_engine
@@ -74,9 +75,15 @@ def scoped_data() -> Iterator[tuple[Session, list[Tenant], list[Environment]]]:
 def test_dashboard_scopes_every_section(scoped_data, scope: str) -> None:
     """Top host e postura AD rispettano anche scope ambiente e combinazioni vuote."""
     session, tenants, envs = scoped_data
+    if scope == "mismatch":
+        # A selected client plus another client's environment is a 404, never data.
+        with pytest.raises(HTTPException) as error:
+            dashboard(tenant_id=tenants[0].id, environment_id=envs[2].id, db=session)
+        assert error.value.status_code == 404
+        return
     tenant_id = tenants[0].id if scope != "environment" else None
-    environment_id = None if scope == "tenant" else envs[2 if scope == "mismatch" else 0].id
-    expected = {0, 1} if scope == "tenant" else (set() if scope == "mismatch" else {0})
+    environment_id = None if scope == "tenant" else envs[0].id
+    expected = {0, 1} if scope == "tenant" else {0}
     result = dashboard(tenant_id=tenant_id, environment_id=environment_id, db=session)
     assert {host["ip"] for host in result["top_hosts"]} == {
         f"192.0.2.{i + 1}" for i in expected}

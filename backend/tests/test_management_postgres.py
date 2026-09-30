@@ -45,7 +45,7 @@ def management_data() -> Iterator[tuple]:
                 name="DMZ", kind="dmz"), db)
             env_b = create_environment(tenants[1].id, EnvironmentIn(
                 name="Production", kind="production"), db)
-            asset = create_asset(env_a1.id, AssetIn(
+            asset = create_asset(env_a1.id, tenants[0].id, AssetIn(
                 ip="192.0.2.10", fqdn="web.example.test",
                 os="Windows Server 2019", criticality=2, tags={"role": "web"}), db)
             yield db, tenants[0], tenants[1], env_a1, env_a2, env_b, asset
@@ -61,12 +61,12 @@ def test_partial_patch_preserves_omitted_fields(management_data: tuple) -> None:
     assert edited.description == "Edited"
     assert edited.name == tenant_a.name and edited.slug == tenant_a.slug
 
-    renamed = update_environment(env_a1.id, EnvironmentPatch(name="Renamed"), db)
+    renamed = update_environment(env_a1.id, tenant_a.id, EnvironmentPatch(name="Renamed"), db)
     assert renamed.name == "Renamed"
     assert renamed.kind == "production" and renamed.match_key == "ip"
     assert renamed.tags == {"tier": "critical"}
 
-    refreshed = update_asset(asset.id, AssetPatch(os="Windows Server 2022"), db)
+    refreshed = update_asset(asset.id, tenant_a.id, AssetPatch(os="Windows Server 2022"), db)
     assert refreshed.os == "Windows Server 2022"
     assert refreshed.criticality == 2 and refreshed.tags == {"role": "web"}
     assert refreshed.fqdn == "web.example.test" and str(refreshed.ip) == "192.0.2.10"
@@ -78,28 +78,30 @@ def test_patch_conflicts_and_missing_targets(management_data: tuple) -> None:
         update_tenant(tenant_a.id, TenantPatch(slug=tenant_b.slug), db)
     assert conflict.value.status_code == 409
     with pytest.raises(HTTPException) as conflict:
-        update_environment(env_a2.id, EnvironmentPatch(name="Production"), db)
+        update_environment(env_a2.id, tenant_a.id, EnvironmentPatch(name="Production"), db)
     assert conflict.value.status_code == 409
     # The same environment name under another client is not a conflict.
-    renamed = update_environment(env_b.id, EnvironmentPatch(name="DMZ"), db)
+    renamed = update_environment(env_b.id, tenant_b.id, EnvironmentPatch(name="DMZ"), db)
     assert renamed.name == "DMZ"
 
     missing = uuid.uuid4()
-    for route, payload in ((update_tenant, TenantPatch(name="Missing")),
-                           (update_environment, EnvironmentPatch(name="Missing")),
-                           (update_asset, AssetPatch(os="Missing"))):
+    for route, args, payload in (
+            (update_tenant, (missing,), TenantPatch(name="Missing")),
+            (update_environment, (missing, tenant_a.id), EnvironmentPatch(name="Missing")),
+            (update_asset, (missing, tenant_a.id), AssetPatch(os="Missing"))):
         with pytest.raises(HTTPException) as error:
-            route(missing, payload, db)
+            route(*args, payload, db)
         assert error.value.status_code == 404
 
 
 def test_empty_patch_is_rejected(management_data: tuple) -> None:
     db, tenant_a, _, env_a1, _, _, asset = management_data
-    for route, target, payload in ((update_tenant, tenant_a.id, TenantPatch()),
-                                   (update_environment, env_a1.id, EnvironmentPatch()),
-                                   (update_asset, asset.id, AssetPatch())):
+    for route, args, payload in (
+            (update_tenant, (tenant_a.id,), TenantPatch()),
+            (update_environment, (env_a1.id, tenant_a.id), EnvironmentPatch()),
+            (update_asset, (asset.id, tenant_a.id), AssetPatch())):
         with pytest.raises(HTTPException) as error:
-            route(target, payload, db)
+            route(*args, payload, db)
         assert error.value.status_code == 422
 
 
@@ -145,5 +147,5 @@ def test_creation_conflicts_and_missing_targets(management_data: tuple) -> None:
         create_environment(uuid.uuid4(), EnvironmentIn(name="Orphan"), db)
     assert missing.value.status_code == 404
     with pytest.raises(HTTPException) as missing:
-        create_asset(uuid.uuid4(), AssetIn(ip="192.0.2.50"), db)
+        create_asset(uuid.uuid4(), tenant_a.id, AssetIn(ip="192.0.2.50"), db)
     assert missing.value.status_code == 404
