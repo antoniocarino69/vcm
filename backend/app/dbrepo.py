@@ -95,8 +95,10 @@ class SqlAlchemyRepository:
 
     def record_status_change(self, finding_id, from_status, to_status, reason,
                              import_id, changed_by) -> None:
+        finding = self.session.get(Finding, finding_id)
         self.session.add(FindingStatusHistory(
-            finding_id=finding_id, from_status=from_status, to_status=to_status,
+            tenant_id=finding.tenant_id, finding_id=finding_id,
+            from_status=from_status, to_status=to_status,
             reason=reason, import_id=import_id, changed_by=changed_by))
         self.session.flush()
 

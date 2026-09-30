@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from ..dbrepo import SessionLocal
 from ..models import Asset, AssetMove, Environment, Tenant
+from .scope import require_asset, require_environment
 
 router = APIRouter(prefix="/api")
 
@@ -232,11 +233,10 @@ def list_environments(tenant_id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.patch("/environments/{env_id}")
-def update_environment(env_id: uuid.UUID, payload: EnvironmentPatch,
+def update_environment(env_id: uuid.UUID, tenant_id: uuid.UUID,
+                       payload: EnvironmentPatch,
                        db: Session = Depends(get_db)):
-    env = db.get(Environment, env_id)
-    if not env:
-        raise HTTPException(404, "Ambiente non trovato")
+    env = require_environment(db, env_id, tenant_id)
     changes = _changes(payload)
     if "name" in changes and db.execute(select(Environment.id).where(
             Environment.tenant_id == env.tenant_id,
@@ -257,8 +257,10 @@ def update_environment(env_id: uuid.UUID, payload: EnvironmentPatch,
 
 # ----------------------------------------------------------------- assets
 @router.get("/environments/{env_id}/assets")
-def list_assets(env_id: uuid.UUID, tag: Optional[str] = None,
+def list_assets(env_id: uuid.UUID, tenant_id: uuid.UUID,
+                tag: Optional[str] = None,
                 search: Optional[str] = None, db: Session = Depends(get_db)):
+    require_environment(db, env_id, tenant_id)
     stmt = select(Asset).where(Asset.environment_id == env_id)
     if search:
         pattern = f"%{search}%"
@@ -273,10 +275,9 @@ def list_assets(env_id: uuid.UUID, tag: Optional[str] = None,
 
 
 @router.post("/environments/{env_id}/assets", status_code=201)
-def create_asset(env_id: uuid.UUID, payload: AssetIn, db: Session = Depends(get_db)):
-    env = db.get(Environment, env_id)
-    if not env:
-        raise HTTPException(404, "Ambiente non trovato")
+def create_asset(env_id: uuid.UUID, tenant_id: uuid.UUID, payload: AssetIn,
+                 db: Session = Depends(get_db)):
+    env = require_environment(db, env_id, tenant_id)
     asset = Asset(tenant_id=env.tenant_id, environment_id=str(env_id),
                   **payload.model_dump())
     db.add(asset)
@@ -286,11 +287,9 @@ def create_asset(env_id: uuid.UUID, payload: AssetIn, db: Session = Depends(get_
 
 
 @router.patch("/assets/{asset_id}")
-def update_asset(asset_id: uuid.UUID, payload: AssetPatch,
+def update_asset(asset_id: uuid.UUID, tenant_id: uuid.UUID, payload: AssetPatch,
                  db: Session = Depends(get_db)):
-    asset = db.get(Asset, asset_id)
-    if not asset:
-        raise HTTPException(404, "Asset non trovato")
+    asset = require_asset(db, asset_id, tenant_id)
     _apply(asset, _changes(payload))
     db.commit()
     db.refresh(asset)
@@ -298,18 +297,17 @@ def update_asset(asset_id: uuid.UUID, payload: AssetPatch,
 
 
 @router.post("/assets/{asset_id}/move")
-def move_asset(asset_id: uuid.UUID, payload: MoveIn, db: Session = Depends(get_db)):
+def move_asset(asset_id: uuid.UUID, tenant_id: uuid.UUID, payload: MoveIn,
+               db: Session = Depends(get_db)):
     """Sposta l'asset in un altro ambiente preservando storico scansioni e
     commenti (findings/scan_imports mantengono environment_id dello snapshot)."""
-    asset = db.get(Asset, asset_id)
-    if not asset:
-        raise HTTPException(404, "Asset non trovato")
+    asset = require_asset(db, asset_id, tenant_id)
     target = db.get(Environment, payload.to_environment_id)
-    if not target or str(target.tenant_id) != str(asset.tenant_id):
+    if not target or str(target.tenant_id) != str(tenant_id):
         raise HTTPException(422, "Ambiente di destinazione non valido per questo cliente")
     if str(asset.environment_id) == str(payload.to_environment_id):
         raise HTTPException(422, "L'asset è già in questo ambiente")
-    db.add(AssetMove(asset_id=str(asset.id),
+    db.add(AssetMove(tenant_id=asset.tenant_id, asset_id=str(asset.id),
                      from_environment_id=str(asset.environment_id),
                      to_environment_id=str(payload.to_environment_id),
                      reason=payload.reason))

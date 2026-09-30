@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..models import Environment, ScanImport, Tenant
 from ..parsers import sniff_file
+from .scope import require_environment, require_import
 from .tenants import get_db
 
 router = APIRouter(prefix="/api")
@@ -33,6 +34,7 @@ async def upload_import(
     scanner: str = Form("auto"),
     auto_close: bool = Form(False),
     created_by: Optional[str] = Form(None),
+    tenant_id: uuid.UUID = Form(...),
     db: Session = Depends(get_db),
 ):
     """Carica un report scanner.
@@ -44,9 +46,7 @@ async def upload_import(
     * il parsing avviene asincrono: la risposta 202 restituisce l'import id
       da seguire su GET /api/imports/{id}.
     """
-    env = db.get(Environment, env_id)
-    if not env:
-        raise HTTPException(404, "Ambiente non trovato")
+    env = require_environment(db, env_id, tenant_id)
     if scanner not in SCANNER_MAP:
         raise HTTPException(422, f"Scanner non supportato: {scanner}")
 
@@ -92,15 +92,15 @@ async def upload_import(
 
 
 @router.get("/imports/{import_id}")
-def get_import(import_id: uuid.UUID, db: Session = Depends(get_db)):
-    scan_import = db.get(ScanImport, import_id)
-    if not scan_import:
-        raise HTTPException(404, "Importazione non trovata")
-    return scan_import
+def get_import(import_id: uuid.UUID, tenant_id: uuid.UUID,
+               db: Session = Depends(get_db)):
+    return require_import(db, import_id, tenant_id)
 
 
 @router.get("/environments/{env_id}/imports")
-def list_imports(env_id: uuid.UUID, db: Session = Depends(get_db)):
+def list_imports(env_id: uuid.UUID, tenant_id: uuid.UUID,
+                 db: Session = Depends(get_db)):
+    require_environment(db, env_id, tenant_id)
     stmt = (select(ScanImport).where(ScanImport.environment_id == env_id)
             .order_by(ScanImport.created_at.desc()))
     return db.execute(stmt).scalars().all()

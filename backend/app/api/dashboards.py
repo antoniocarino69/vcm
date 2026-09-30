@@ -17,6 +17,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from ..models import (ADHealthSnapshot, Asset, Finding, ScanImport)
+from .scope import require_environment
 from .tenants import get_db
 
 router = APIRouter(prefix="/api")
@@ -37,6 +38,8 @@ def _scope(stmt, tenant_id, environment_id, model=Finding):
 def dashboard(tenant_id: Optional[uuid.UUID] = None,
               environment_id: Optional[uuid.UUID] = None,
               db: Session = Depends(get_db)):
+    if environment_id and tenant_id:
+        require_environment(db, environment_id, tenant_id)
     base = select(Finding)
     base = _scope(base, tenant_id, environment_id)
 
@@ -151,6 +154,8 @@ def compliance_overview(tenant_id: Optional[uuid.UUID] = None,
                         environment_id: Optional[uuid.UUID] = None,
                         db: Session = Depends(get_db)):
     """Vista compliance: esiti SCC (pass/fail/NR) e regole AD per categoria."""
+    if environment_id and tenant_id:
+        require_environment(db, environment_id, tenant_id)
     results = db.execute(
         _scope(select(Finding.result, func.count()).group_by(Finding.result),
                tenant_id, environment_id)

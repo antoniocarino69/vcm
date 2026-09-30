@@ -1,4 +1,4 @@
-"""API: findings — filtri, dettaglio, transizioni di stato, commenti."""
+"""API: findings — scoped lists, detail, status transitions, comments."""
 from __future__ import annotations
 
 import uuid
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..models import Finding, FindingComment, FindingStatusHistory
 from ..services.ingest import transition_status
+from .scope import require_asset, require_environment, require_finding
 from .tenants import get_db
 
 router = APIRouter(prefix="/api")
@@ -30,7 +31,7 @@ class CommentIn(BaseModel):
 
 
 class _Repo:
-    """Adapter minimale per transition_status (stato manuale lato API)."""
+    """Adapter for transition_status (manual status changes via API)."""
 
     def __init__(self, db: Session):
         self.db = db
@@ -43,15 +44,17 @@ class _Repo:
 
     def record_status_change(self, finding_id, from_status, to_status, reason,
                              import_id, changed_by):
+        finding = self.db.get(Finding, finding_id)
         self.db.add(FindingStatusHistory(
-            finding_id=finding_id, from_status=from_status, to_status=to_status,
+            tenant_id=finding.tenant_id, finding_id=finding_id,
+            from_status=from_status, to_status=to_status,
             reason=reason, import_id=import_id, changed_by=changed_by))
         self.db.flush()
 
 
 @router.get("/findings")
 def list_findings(
-    tenant_id: Optional[uuid.UUID] = None,
+    tenant_id: uuid.UUID,
     environment_id: Optional[uuid.UUID] = None,
     asset_id: Optional[uuid.UUID] = None,
     status: Optional[str] = "active",
@@ -63,9 +66,11 @@ def list_findings(
     offset: int = 0,
     db: Session = Depends(get_db),
 ):
-    stmt = select(Finding)
-    if tenant_id:
-        stmt = stmt.where(Finding.tenant_id == tenant_id)
+    if environment_id:
+        require_environment(db, environment_id, tenant_id)
+    if asset_id:
+        require_asset(db, asset_id, tenant_id)
+    stmt = select(Finding).where(Finding.tenant_id == tenant_id)
     if environment_id:
         stmt = stmt.where(Finding.environment_id == environment_id)
     if asset_id:
@@ -87,10 +92,8 @@ def list_findings(
 
 
 @router.get("/findings/{finding_id}")
-def get_finding(finding_id: int, db: Session = Depends(get_db)):
-    finding = db.get(Finding, finding_id)
-    if not finding:
-        raise HTTPException(404, "Finding non trovato")
+def get_finding(finding_id: int, tenant_id: uuid.UUID, db: Session = Depends(get_db)):
+    finding = require_finding(db, finding_id, tenant_id)
     history = db.execute(
         select(FindingStatusHistory).where(FindingStatusHistory.finding_id == finding_id)
         .order_by(FindingStatusHistory.changed_at.desc())).scalars().all()
@@ -101,12 +104,11 @@ def get_finding(finding_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/findings/{finding_id}/status")
-def change_status(finding_id: int, payload: StatusIn, db: Session = Depends(get_db)):
-    """Transizioni: Active / Mitigated / False Positive / Risk Accepted
+def change_status(finding_id: int, tenant_id: uuid.UUID, payload: StatusIn,
+                  db: Session = Depends(get_db)):
+    """Transitions: Active / Mitigated / False Positive / Risk Accepted
     (con data scadenza + nota obbligatoria)."""
-    finding = db.get(Finding, finding_id)
-    if not finding:
-        raise HTTPException(404, "Finding non trovato")
+    finding = require_finding(db, finding_id, tenant_id)
     current = {c.name: getattr(finding, c.name) for c in finding.__table__.columns}
     try:
         transition_status(_Repo(db), current, payload.status, payload.reason,
@@ -120,10 +122,11 @@ def change_status(finding_id: int, payload: StatusIn, db: Session = Depends(get_
 
 
 @router.post("/findings/{finding_id}/comments", status_code=201)
-def add_comment(finding_id: int, payload: CommentIn, db: Session = Depends(get_db)):
-    if not db.get(Finding, finding_id):
-        raise HTTPException(404, "Finding non trovato")
-    comment = FindingComment(finding_id=finding_id, **payload.model_dump())
+def add_comment(finding_id: int, tenant_id: uuid.UUID, payload: CommentIn,
+                db: Session = Depends(get_db)):
+    finding = require_finding(db, finding_id, tenant_id)
+    comment = FindingComment(tenant_id=finding.tenant_id, finding_id=finding_id,
+                             **payload.model_dump())
     db.add(comment)
     db.commit()
     return comment

@@ -15,12 +15,16 @@ from ..services.reports_render import (render_executive_html,
                                        render_technical_csv,
                                        render_technical_html)
 from .dashboards import dashboard
+from .scope import require_environment, require_tenant
 from .tenants import get_db
 
 router = APIRouter(prefix="/api/reports")
 
 
 def _bundle(tenant_id, environment_id, db: Session) -> dict:
+    require_tenant(db, tenant_id)
+    if environment_id:
+        require_environment(db, environment_id, tenant_id)
     data = dashboard(tenant_id=tenant_id, environment_id=environment_id, db=db)
     tenant = db.get(Tenant, tenant_id) if tenant_id else None
     env = db.get(Environment, environment_id) if environment_id else None
