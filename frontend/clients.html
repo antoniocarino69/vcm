@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clients & environments — VCM</title>
+  <link rel="stylesheet" href="portal.css">
+  <script src="clients.js" defer></script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/">VCM <span>Vulnerability & Compliance</span></a>
+    <nav aria-label="Main navigation"><a href="/">Dashboard</a><a href="clients.html" aria-current="page">Clients & environments</a></nav>
+  </header>
+  <main>
+    <div class="page-heading"><p class="eyebrow">Workspace setup</p><h1>Clients & environments</h1><p>Organize your clients and the infrastructure you assess.</p></div>
+    <p id="notice" class="notice" role="status" aria-live="polite" hidden></p>
+    <div class="workspace">
+      <section class="panel" aria-labelledby="clients-heading">
+        <div class="panel-heading"><h2 id="clients-heading">Clients</h2><button id="refresh" type="button" class="secondary">Refresh</button></div>
+        <p id="client-list-status" class="muted" role="status">Loading clients…</p>
+        <div id="client-list" class="client-list" aria-label="Select a client"></div>
+        <form id="client-form">
+          <h3>Create a client</h3>
+          <label for="client-name">Client name</label>
+          <input id="client-name" name="name" required maxlength="200" placeholder="Example Industries">
+          <label for="client-slug">Client key</label>
+          <input id="client-slug" name="slug" required maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="example-industries" aria-describedby="slug-help">
+          <p id="slug-help" class="hint">Unique lowercase key, using letters, numbers and hyphens.</p>
+          <label for="client-description">Description <span class="muted">(optional)</span></label>
+          <textarea id="client-description" name="description" rows="2" maxlength="2000"></textarea>
+          <p id="client-error" class="error" role="alert" hidden></p>
+          <button type="submit">Create client</button>
+        </form>
+      </section>
+      <section class="panel" aria-labelledby="environments-heading">
+        <div class="panel-heading"><h2 id="environments-heading">Environments</h2><span id="environment-count" class="badge">0</span></div>
+        <h3 id="selected-name">Select a client</h3>
+        <p id="selected-description" class="muted"></p>
+        <p id="environment-status" role="status" class="muted">Select a client to view or create environments.</p>
+        <div class="table-scroll"><table id="environment-table" hidden><thead><tr><th>Name</th><th>Type</th><th>Asset matching</th></tr></thead><tbody id="environment-list"></tbody></table></div>
+        <form id="environment-form">
+          <h3>Create an environment</h3>
+          <fieldset id="environment-fields" disabled>
+            <label for="environment-name">Environment name</label>
+            <input id="environment-name" name="name" required maxlength="200" placeholder="Production servers">
+            <div class="field-row">
+              <div><label for="environment-kind">Type</label><select id="environment-kind" name="kind"><option value="production">Production</option><option value="dmz">DMZ</option><option value="active_directory">Active Directory</option><option value="staging">Staging</option><option value="cloud">Cloud</option><option value="ot">Operational technology</option><option value="other">Other</option></select></div>
+              <div><label for="environment-match">Match assets by</label><select id="environment-match" name="match_key"><option value="ip">IP address</option><option value="fqdn">FQDN</option><option value="netbios">NetBIOS name</option></select></div>
+            </div>
+            <p class="hint">Choose the identity your scanner reports consistently to reconcile repeated assessments.</p>
+            <button type="submit">Create environment</button>
+          </fieldset>
+          <p id="environment-error" class="error" role="alert" hidden></p>
+        </form>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
