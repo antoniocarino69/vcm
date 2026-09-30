@@ -12,3 +12,9 @@ Selezione cliente/ambiente/scanner/file, auto-close off di default, polling comp
 
 ## Stato
 - aperta
+
+## Updated product scope (2026-09-30)
+See `docs/portal-next-steps.md`, section D. Scan upload, optional dating and tagging — #0012, #0020.
+The current request includes a shared sidebar, per-asset finding decisions,
+OS/tag filtering and optional pre-upload dates/tags; proposals require scoped
+API/schema increments before being presented as implemented behavior.

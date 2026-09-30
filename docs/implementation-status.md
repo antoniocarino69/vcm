@@ -2,6 +2,10 @@
 
 Updated: 2026-09-30. Product text and new documentation use English.
 
+The active product checklist is [portal-next-steps.md](portal-next-steps.md).
+It includes sidebar redesign, individual asset/finding workflows, optional
+scan dates/tags, OS/tag filters and separate VA/remediation campaigns.
+
 ## Completed increments
 
 | Issue | Result | Verification |

@@ -12,3 +12,9 @@ P4a schema+migrazione+servizi+API+GUI minima: selezione finding, owner, scadenza
 
 ## Stato
 - aperta
+
+## Updated product scope (2026-09-30)
+See `docs/portal-next-steps.md`, section F. VA and remediation campaigns — #0022, #0015.
+The current request includes a shared sidebar, per-asset finding decisions,
+OS/tag filtering and optional pre-upload dates/tags; proposals require scoped
+API/schema increments before being presented as implemented behavior.

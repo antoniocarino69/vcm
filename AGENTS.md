@@ -75,6 +75,18 @@ Da fare, in quest'ordine:
 Apri una issue per ogni milestone prima di iniziarla; i passi avanti si
 mergiano in piccoli incrementi, non in un "M3 completo" monolitico.
 
+### Current product direction (2026-09-30)
+
+The user explicitly deferred authentication. Complete the operational portal
+increments in `docs/portal-next-steps.md` before starting SSO/RBAC; do not treat
+the older M1 ordering as authorization to introduce authentication now.
+That document is the active, checkable plan for sidebar navigation, scoped
+asset/finding views, optional scan dates/tags, OS/tag filters, VA campaigns and
+remediation campaigns. Check items only after real verification and publication.
+An individual vulnerability decision applies to one asset-associated finding,
+never globally to a CVE/rule across all servers. Campaigns remain optional
+associations and must not introduce a mandatory Engagement/Test hierarchy.
+
 ## 4. Come si lavora qui (workflow obbligatorio)
 
 Il dettaglio è in `CONTRIBUTING.md`. Il minimo sindacale:
@@ -97,6 +109,14 @@ Il dettaglio è in `CONTRIBUTING.md`. Il minimo sindacale:
    (`docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build`)
    e un flusso end-to-end (upload → import completed → findings → dashboard).
    Non dichiarare mai "funziona" senza aver visto girare il codice.
+6. **Commit and push completed work**: after every successfully completed feature
+   and at the end of each work session, update its issue/checklist, run the
+   required checks, commit the complete increment and push the active branch to
+   `https://github.com/antoniocarino69/vcm.git`. Verify that the remote branch
+   contains the commit. Do not leave completed work only on one computer.
+   If a push fails, report the precise blocker and retain the local commit;
+   never claim publication succeeded. Do not force-push, replace remote history,
+   or bypass the main/PR workflow to make the push succeed.
 
 ## 5. Verifiche rapide
 
@@ -117,7 +137,7 @@ deve restare **raggiungibile dall'esterno** (bind 0.0.0.0 / porta pubblica).
 
 ## 6. Convenzioni di codice
 
-- Python: type hints ovunque, docstring in italiano con concetto tecnico in
+- Python: type hints ovunque, nuove docstring in inglese con concetto tecnico in
   inglese (finding, dedup, sniff...), funzioni pure quando la logica è
   testabile senza DB (è il motivo per cui `services/` non ha SQLAlchemy).
 - Naming: `snake_case` ovunque; le tabelle rispecchiano `db/schema.sql`;
@@ -129,6 +149,29 @@ deve restare **raggiungibile dall'esterno** (bind 0.0.0.0 / porta pubblica).
   la riga successiva.
 - Refactoring e fix di refusi vanno in commit/PR separati da feature e fix
   (niente "fix + pulizia" mescolati).
+- Product UI, new documentation, comments and docstrings use English. The
+  conversation with the user may remain Italian; existing data values and
+  scanner evidence are preserved in their original language.
+
+### Reference repositories and interface design
+
+Consult the actual Faraday (`https://github.com/infobyte/faraday`) and
+DefectDojo (`https://github.com/DefectDojo/django-DefectDojo`) repositories and
+official documentation when implementing navigation, filters, finding details,
+campaign workflows or scanner compatibility. Inspect relevant code/screenshots,
+record the source revision and distinguish OSS from commercial behavior.
+Do not rely solely on a generic dashboard or remembered descriptions.
+Reuse/adapt suitable code or interaction patterns with provenance and the
+applicable license recorded, while preserving VCM's architecture and deployment
+constraints. Verify scanner formats against official versioned schemas/examples
+and sanitized real exports; do not present an assumed CSV layout as a verified
+vendor export.
+
+The portal must have shared sidebar sections, stable client/environment context,
+practical asset/finding tables, and a consistent visual language designed for
+system administrators. Avoid repeating generic card grids and oversized KPI
+panels across every page. Design and verify actual list/detail/filter workflows,
+including mobile/keyboard behavior, before declaring the interface refactor done.
 
 ## 7. Cosa NON fare
 
