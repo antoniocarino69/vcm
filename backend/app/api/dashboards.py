@@ -25,11 +25,11 @@ SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
 SEVERITY_WEIGHT = {"critical": 10, "high": 7, "medium": 4, "low": 2, "info": 0}
 
 
-def _scope(stmt, tenant_id, environment_id):
+def _scope(stmt, tenant_id, environment_id, model=Finding):
     if tenant_id:
-        stmt = stmt.where(Finding.tenant_id == tenant_id)
+        stmt = stmt.where(model.tenant_id == tenant_id)
     if environment_id:
-        stmt = stmt.where(Finding.environment_id == environment_id)
+        stmt = stmt.where(model.environment_id == environment_id)
     return stmt
 
 
@@ -84,7 +84,7 @@ def dashboard(tenant_id: Optional[uuid.UUID] = None,
                .order_by(func.count(func.distinct(Finding.asset_id)).desc())
                .limit(10), tenant_id, environment_id)).all()
     top_hosts = db.execute(
-        select(Asset.id, Asset.ip, Asset.fqdn, Asset.hostname_netbios,
+        _scope(select(Asset.id, Asset.ip, Asset.fqdn, Asset.hostname_netbios,
                func.count(Finding.id).label("open_findings"),
                func.count(case((Finding.severity.in_(["critical", "high"]), 1))).label("crit_high"))
         .join(Finding, Finding.asset_id == Asset.id)
@@ -92,11 +92,19 @@ def dashboard(tenant_id: Optional[uuid.UUID] = None,
         .group_by(Asset.id)
         .order_by(func.count(case((Finding.severity.in_(["critical", "high"]), 1))).desc(),
                   func.count(Finding.id).desc())
-        .limit(10)).all()
+        .limit(10), tenant_id, environment_id)).all()
 
     # 4) AD Health Score: ultimi snapshot per tool
+    # Seleziona l'ultimo snapshot per coppia tool/ambiente prima di leggere i dati.
+    latest_ad = _scope(
+        select(ADHealthSnapshot.id, func.row_number().over(
+            partition_by=(ADHealthSnapshot.tool, ADHealthSnapshot.environment_id),
+            order_by=(ADHealthSnapshot.snapshot_at.desc(), ADHealthSnapshot.id.desc()),
+        ).label("position")), tenant_id, environment_id, ADHealthSnapshot).subquery()
     ad_rows = db.execute(
-        select(ADHealthSnapshot).order_by(ADHealthSnapshot.snapshot_at.desc()).limit(20)).scalars().all()
+        select(ADHealthSnapshot).join(latest_ad, latest_ad.c.id == ADHealthSnapshot.id)
+        .where(latest_ad.c.position == 1)
+        .order_by(ADHealthSnapshot.snapshot_at.desc(), ADHealthSnapshot.id.desc())).scalars().all()
     seen_tools: dict[str, dict] = {}
     for snap in ad_rows:
         key = f"{snap.tool}:{snap.environment_id}"

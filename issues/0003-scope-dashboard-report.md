@@ -11,4 +11,9 @@ Scrivere regressioni prima dei fix; per API/DB/worker verificare lo stack reale.
 Applicare scope prima di aggregazione/limit. Regressione PostgreSQL con due clienti e più di 20 snapshot; verifica report e stack reale.
 
 ## Stato
-- aperta
+- chiusa
+- branch: fix/0003-scope-dashboard
+- chiusa dal commit `fix(#0003): scope dashboard hosts and AD snapshots`
+- verifica: 5 regressioni PostgreSQL fallite prima del fix, suite con DB 29 passed;
+  suite senza DB 24 passed / 5 skipped; build reale ed E2E con due tenant,
+  upload completed, findings, dashboard e report Executive scoped.
