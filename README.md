@@ -1,5 +1,8 @@
 # VCM — Vulnerability & Compliance Management
 
+> **Per agente/assistente/sviluppatore**: leggi `AGENTS.md` prima di toccare
+> codice. Workflow in `CONTRIBUTING.md`, issue in `issues/`.
+
 Piattaforma web modulare, multi-tenant e self-hosted di gestione vulnerabilità e
 conformità (STIG/SCAP) per infrastruttura sistemistica e Active Directory.
 
