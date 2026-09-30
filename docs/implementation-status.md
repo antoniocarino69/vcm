@@ -9,6 +9,8 @@ Updated: 2026-09-30. Product text and new documentation use English.
 | #0002 | Reimports preserve risk acceptance and false-positive decisions; mitigated findings still reopen | Four regression cases; included in the rebuilt API/worker |
 | #0003 | Dashboard top hosts and AD snapshots respect tenant/environment scope, including the Executive report data | Five PostgreSQL regression cases; real upload → completed import → findings → dashboard → report with two tenants |
 | #0011 P1a | Client/environment creation and selection at `/clients.html` | Real Chromium browser creation and refresh against the live API; mobile layout; separate mocked browser regression for errors, safe text and stale responses |
+| #0008 | Dashboard uses safe text rendering and refreshes environment/import context when switching clients; unscoped report links are disabled | Browser regression failed before the fix, then passed; late import responses cannot replace the selected client's data |
+| #0017 | Dashboard and generated report labels use English | Rebuilt API/worker; live HTML reports checked |
 
 The portal is published on `0.0.0.0:8080`. No authentication was added.
 Client and environment editing/archiving remain #0011 P1b. Campaigns, finding
@@ -35,6 +37,7 @@ records or add application runtime dependencies:
 
 ```sh
 NODE_PATH=/root/pw-tools/node_modules node frontend/tests/clients.browser.cjs
+NODE_PATH=/root/pw-tools/node_modules node frontend/tests/dashboard.browser.cjs
 ```
 
 For another URL, set `VCM_PORTAL_URL`. API/worker changes were checked with:

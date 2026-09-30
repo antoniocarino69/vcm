@@ -28,8 +28,11 @@
   .critical{color:#f87171}.high{color:#fb923c}.medium{color:#facc15}.low{color:#60a5fa}.info{color:#9ca3af}
   .row{display:flex;gap:1rem;flex-wrap:wrap}
   .row>.card{flex:1 1 20rem}
-  .toolbar{margin-left:auto;display:flex;gap:.5rem}
+  .toolbar{margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap}
+  header{flex-wrap:wrap}
+  @media(max-width:600px){main{grid-template-columns:minmax(0,1fr);padding:1rem}header{padding:1rem}.toolbar{margin-left:0}.row{overflow:auto}}
   select,button{background:#0e1730;color:var(--txt);border:1px solid var(--line);border-radius:.4rem;padding:.35rem .6rem}
+  a[aria-disabled="true"]{opacity:.5;cursor:default}
   a.btn{color:#93c5fd;text-decoration:none;font-size:.85rem}
 </style>
 </head>
@@ -46,6 +49,7 @@
   </div>
 </header>
 <main>
+  <p id="dashboard-error" class="wide" role="alert" style="color:#f87171" hidden></p>
   <div class="card wide">
     <h2>Overall posture</h2>
     <div class="kpis">
@@ -75,56 +79,99 @@
 <script>
 const $ = s => document.querySelector(s);
 const API = '/api';
-let charts = {};
+const charts = {};
+let tenants = [], scopeVersion = 0;
 
-async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(url); return r.json(); }
-function sevSpan(s){ return `<span class="sev ${s}">${s.toUpperCase()}</span>`; }
+async function jget(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Request failed (${response.status}). Please retry.`);
+  return response.json();
+}
 
-async function loadTenants(){
-  const tenants = await jget(`${API}/tenants`);
-  const sel = $('#tenant');
-  tenants.forEach(t => sel.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.name}</option>`));
-  sel.onchange = () => loadDashboard(sel.value);
-  if (tenants.length){
-    const envs = [];
-    for (const t of tenants){
-      const list = await jget(`${API}/tenants/${t.id}/environments`);
-      envs.push(`<tr><td>${t.name}</td><td>${list.map(e=>`${e.name} <span class="muted">(${e.kind})</span>`).join('<br>') || '—'}</td></tr>`);
-    }
-    $('#envs').insertAdjacentHTML('beforeend', envs.join(''));
-    const firstEnv = await jget(`${API}/tenants/${tenants[0].id}/environments`);
-    if (firstEnv.length) loadImports(firstEnv[0].id);
-    setReportLinks(tenants[0].id);
+function textNode(value) {
+  return document.createTextNode(value == null ? '—' : String(value));
+}
+
+function renderTable(selector, headers, rows) {
+  const table = $(selector);
+  table.replaceChildren();
+  const heading = document.createElement('tr');
+  for (const title of headers) {
+    const cell = document.createElement('th'); cell.textContent = title; heading.append(cell);
   }
-  loadDashboard('');
+  table.append(heading);
+  for (const values of rows) {
+    const row = document.createElement('tr');
+    for (const value of values) {
+      const cell = document.createElement('td');
+      cell.append(value instanceof Node ? value : textNode(value));
+      row.append(cell);
+    }
+    table.append(row);
+  }
 }
 
-function setReportLinks(tenantId){
-  $('#rep-exec').href = `${API}/reports/executive?tenant_id=${tenantId}`;
-  $('#rep-tech').href = `${API}/reports/technical?tenant_id=${tenantId}`;
-  $('#rep-csv').href  = `${API}/reports/technical?tenant_id=${tenantId}&format=csv`;
+function severityLabel(value) {
+  const severity = ['critical','high','medium','low','info'].includes(value) ? value : 'info';
+  const span = document.createElement('span');
+  span.className = `sev ${severity}`; span.textContent = severity.toUpperCase();
+  return span;
 }
 
-async function loadImports(envId){
-  try{
-    const rows = await jget(`${API}/environments/${envId}/imports`);
-    rows.slice(0,8).forEach(i => {
-      const st = i.stats || {};
-      $('#imports').insertAdjacentHTML('beforeend',
-        `<tr><td>${i.scanner}</td><td>${i.filename}</td><td>${i.status}</td>
-         <td>${st.created ?? 0} new / ${st.updated ?? 0} upd / ${st.auto_closed ?? 0} closed</td></tr>`);
-    });
-  }catch(e){ /* no imports */ }
+function showError(error) {
+  $('#dashboard-error').textContent = error.message;
+  $('#dashboard-error').hidden = false;
 }
 
-function upsertChart(key, canvasId, config){
+function setReportLinks(tenantId) {
+  for (const [id, path] of [['#rep-exec','executive'],['#rep-tech','technical'],['#rep-csv','technical']]) {
+    const link = $(id);
+    if (tenantId) {
+      link.href = `${API}/reports/${path}?tenant_id=${encodeURIComponent(tenantId)}${id === '#rep-csv' ? '&format=csv' : ''}`;
+      link.removeAttribute('aria-disabled');
+    } else {
+      link.removeAttribute('href'); link.setAttribute('aria-disabled','true');
+    }
+  }
+}
+
+async function loadEnvironments(tenantId, version) {
+  const clients = tenantId ? tenants.filter(t => t.id === tenantId) : tenants;
+  const groups = await Promise.all(clients.map(async client => ({
+    client, envs: await jget(`${API}/tenants/${client.id}/environments`)
+  })));
+  if (version !== scopeVersion) return;
+  renderTable('#envs', ['Client','Environments'], groups.map(({client,envs}) => [
+    client.name, envs.map(env => `${env.name} (${env.kind})`).join(', ') || '—'
+  ]));
+  if (!tenantId) return;
+  const imports = (await Promise.all(groups.flatMap(({envs}) => envs.map(async env => (
+    await jget(`${API}/environments/${env.id}/imports`)
+  ).map(row => ({...row, environmentName:env.name})))))).flat();
+  if (version !== scopeVersion) return;
+  imports.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
+  renderTable('#imports', ['Environment','Scanner','File','Status','Findings'],
+    imports.slice(0,8).map(row => {
+      const stats = row.stats || {};
+      return [row.environmentName, row.scanner, row.filename, row.status,
+        `${stats.created ?? 0} new / ${stats.updated ?? 0} updated / ${stats.auto_closed ?? 0} mitigated`];
+    }));
+  if (!imports.length) renderTable('#imports', ['Imports'], [['No imports for this client yet.']]);
+}
+
+function upsertChart(key, canvasId, config) {
+  if (typeof Chart === 'undefined') {
+    showError(new Error('Charts could not load. Assessment data is still available.'));
+    return;
+  }
   if (charts[key]) charts[key].destroy();
   charts[key] = new Chart($(canvasId), config);
 }
 
-async function loadDashboard(tenantId){
-  const q = tenantId ? `?tenant_id=${tenantId}` : '';
-  const d = await jget(`${API}/dashboard${q}`);
+async function loadDashboard(tenantId, version) {
+  const query = tenantId ? `?tenant_id=${encodeURIComponent(tenantId)}` : '';
+  const d = await jget(`${API}/dashboard${query}`);
+  if (version !== scopeVersion) return;
   $('#k-posture').textContent = d.posture_score;
   $('#k-active').textContent = d.totals.active;
   $('#k-vuln').textContent = d.totals.vulnerabilities;
@@ -133,7 +180,6 @@ async function loadDashboard(tenantId){
   $('#k-ra').textContent = d.totals.risk_accepted;
   const ad = d.ad_health[0];
   $('#k-ad').textContent = ad && ad.global_score != null ? ad.global_score : '—';
-
   const order = ['critical','high','medium','low','info'];
   upsertChart('sev', '#sev-chart', {
     type: 'doughnut',
@@ -163,18 +209,46 @@ async function loadDashboard(tenantId){
                scales:{x:{ticks:{color:'#8b98b4'}},y:{ticks:{color:'#8b98b4'},beginAtZero:true}} }
   });
 
-  $('#top-rules').innerHTML = '<tr><th>Rule</th><th>Severity</th><th>Host</th></tr>' +
-    d.top_rules.map(r=>`<tr><td>${r.rule_id} — ${r.title.slice(0,60)}</td>
-      <td>${sevSpan(r.severity)}</td><td>${r.affected_assets}</td></tr>`).join('');
-  $('#top-hosts').innerHTML = '<tr><th>Host</th><th>Open</th><th>Crit/High</th></tr>' +
-    d.top_hosts.map(h=>`<tr><td>${h.fqdn || h.ip || h.netbios}</td>
-      <td>${h.open_findings}</td><td>${h.open_crit_high}</td></tr>`).join('');
 
-  $('#tenant').onchange = e => { loadDashboard(e.target.value); setReportLinks(e.target.value); };
+  renderTable('#top-rules', ['Rule','Severity','Hosts'], d.top_rules.map(rule => [
+    `${rule.rule_id} — ${String(rule.title || '').slice(0,60)}`, severityLabel(rule.severity), rule.affected_assets
+  ]));
+  renderTable('#top-hosts', ['Host','Open','Critical / High'], d.top_hosts.map(host => [
+    host.fqdn || host.ip || host.netbios, host.open_findings, host.open_crit_high
+  ]));
 }
 
-loadTenants().catch(e => document.body.insertAdjacentHTML('afterbegin',
-  `<p style="color:#f87171;padding:1rem">API unavailable: ${e}</p>`));
+async function loadView(tenantId) {
+  const version = ++scopeVersion;
+  $('#dashboard-error').hidden = true;
+  setReportLinks(tenantId);
+  for (const key of Object.keys(charts)) { charts[key].destroy(); delete charts[key]; }
+  document.querySelectorAll('.kpi b').forEach(node => { node.textContent = '…'; });
+  renderTable('#envs', ['Environments'], [['Loading…']]);
+  renderTable('#imports', ['Imports'], [[tenantId ? 'Loading…' : 'Select a client to view imports.']]);
+  renderTable('#top-rules', ['Rules'], [['Loading…']]);
+  renderTable('#top-hosts', ['Hosts'], [['Loading…']]);
+  const url = new URL(location.href);
+  if (tenantId) url.searchParams.set('tenant_id', tenantId); else url.searchParams.delete('tenant_id');
+  history.replaceState(null, '', url);
+  try {
+    await Promise.all([loadDashboard(tenantId, version), loadEnvironments(tenantId, version)]);
+  } catch (error) { if (version === scopeVersion) showError(error); }
+}
+
+async function loadTenants() {
+  tenants = await jget(`${API}/tenants`);
+  const selectedId = new URL(location.href).searchParams.get('tenant_id');
+  const select = $('#tenant');
+  select.replaceChildren(new Option('All clients', ''));
+  for (const tenant of tenants) select.add(new Option(tenant.name, tenant.id));
+  select.value = tenants.some(tenant => tenant.id === selectedId) ? selectedId : '';
+  select.onchange = () => loadView(select.value);
+  await loadView(select.value);
+}
+
+setReportLinks('');
+loadTenants().catch(showError);
 </script>
 </body>
 </html>
