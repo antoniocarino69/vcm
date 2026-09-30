@@ -72,27 +72,27 @@ def render_executive_html(data: dict[str, Any]) -> str:
         f'AD Health — {_esc(item["tool"])} ({_esc(item["snapshot_at"][:10])})</div>'
         for item in ad)
 
-    return f"""<!doctype html><html lang="it"><head><meta charset="utf-8">
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>Executive Report — {_esc(data.get('tenant_name', 'VCM'))}</title>
 <style>{_CSS}</style></head><body>
 <h1>Executive Security &amp; Compliance Report — {_esc(data.get('tenant_name', ''))}</h1>
-<p class="muted">Ambiente: {_esc(data.get('environment_name', 'tutti'))} — generato il {_esc(data.get('generated_at', ''))}</p>
+<p class="muted">Environment: {_esc(data.get('environment_name', 'all'))} — generated at {_esc(data.get('generated_at', ''))}</p>
 <div class="kpi">
-  {_kpi('Postura (0-100)', data.get('posture_score', 'n/d'))}
-  {_kpi('Finding aperti', totals.get('active', 0))}
+  {_kpi('Posture (0–100)', data.get('posture_score', 'n/a'))}
+  {_kpi('Open findings', totals.get('active', 0))}
   {_kpi('Critical + High', severity.get('critical', 0) + severity.get('high', 0))}
-  {_kpi('Remediated (periodo)', closed_total)}
+  {_kpi('Mitigated (period)', closed_total)}
   {_kpi('Risk Accepted', totals.get('risk_accepted', 0))}
 </div>
-<h2>Distribuzione del rischio</h2>
+<h2>Risk distribution</h2>
 {bars}
 <div class="kpi">{ad_html}</div>
-<h2>Progressi di remediation</h2>
-<table><tr><th>Giorno</th><th>Aperti</><th>Chiusi</th></tr>{trend_rows}</table>
-<h2>Ambiti coperti</h2>
-<p>Vulnerabilità: {totals.get('vulnerabilities', 0)} aperte — Compliance (STIG/AD):
-{totals.get('compliance', 0)} controlli non conformi.</p>
-<p class="muted">Report di sintesi: i dettagli tecnici sono disponibili nel
+<h2>Remediation progress</h2>
+<table><tr><th>Day</th><th>Open</th><th>Mitigated</th></tr>{trend_rows}</table>
+<h2>Assessment coverage</h2>
+<p>Vulnerabilities: {totals.get('vulnerabilities', 0)} open — Compliance (STIG/AD):
+{totals.get('compliance', 0)} non-compliant checks.</p>
+<p class="muted">For technical details, see the
 Technical Report.</p>
 </body></html>"""
 
@@ -112,27 +112,27 @@ def render_technical_html(data: dict[str, Any]) -> str:
             if f.get("stig_category"):
                 extra.append(f"STIG: {_esc(f['stig_category'])}")
             if f.get("result"):
-                extra.append(f"Esito: {_esc(f['result'])}")
+                extra.append(f"Result: {_esc(f['result'])}")
             findings_html.append(f"""
 <details><summary><span class="sev" style="color:{sev_color}">[{_esc(f.get('severity', '').upper())}]</span>
 {_esc(f.get('rule_id'))} — {_esc(f.get('rule_title'))}</summary>
-<p>{' | '.join(extra)} | CVE: {_esc(cves)} | Porta: {_esc(f.get('port') or '—')}/{_esc(f.get('protocol') or '—')}</p>
-<p><b>Descrizione:</b> {_esc((f.get('description') or '')[:2000])}</p>
-<p><b>Remediation:</b> {_esc(f.get('solution') or 'n/d')}</p>
+<p>{' | '.join(extra)} | CVE: {_esc(cves)} | Port: {_esc(f.get('port') or '—')}/{_esc(f.get('protocol') or '—')}</p>
+<p><b>Description:</b> {_esc((f.get('description') or '')[:2000])}</p>
+<p><b>Remediation:</b> {_esc(f.get('solution') or 'n/a')}</p>
 <pre>{_esc((f.get('scanner_output') or '')[:5000])}</pre>
 </details>""")
         rows.append(f"""
 <h2>Host {_esc(host.get('ip') or host.get('fqdn') or host.get('netbios'))}</h2>
 <p class="muted">FQDN: {_esc(host.get('fqdn') or '—')} — NetBIOS: {_esc(host.get('netbios') or '—')} —
-OS: {_esc(host.get('os') or 'n/d')} — Aperti: {len(host.get('findings', []))}</p>
+OS: {_esc(host.get('os') or 'n/a')} — Open: {len(host.get('findings', []))}</p>
 {''.join(findings_html)}""")
 
-    return f"""<!doctype html><html lang="it"><head><meta charset="utf-8">
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>Technical Report — {_esc(data.get('tenant_name', 'VCM'))}</title>
 <style>{_CSS}</style></head><body>
 <h1>Technical Vulnerability &amp; Compliance Report — {_esc(data.get('tenant_name', ''))}</h1>
-<p class="muted">Ambiente: {_esc(data.get('environment_name', 'tutti'))} — generato il {_esc(data.get('generated_at', ''))}</p>
-{''.join(rows) if rows else '<p>Nessun finding aperto.</p>'}
+<p class="muted">Environment: {_esc(data.get('environment_name', 'all'))} — generated at {_esc(data.get('generated_at', ''))}</p>
+{''.join(rows) if rows else '<p>No open findings.</p>'}
 </body></html>"""
 
 

@@ -58,8 +58,8 @@ def _bundle(tenant_id, environment_id, db: Session) -> dict:
         })
 
     data.update({
-        "tenant_name": tenant.name if tenant else "Tutti i clienti",
-        "environment_name": env.name if env else "tutti",
+        "tenant_name": tenant.name if tenant else "All clients",
+        "environment_name": env.name if env else "all",
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "hosts": list(hosts.values()),
     })
@@ -98,7 +98,7 @@ def _as_pdf(body: str, kind: str) -> Response:
         from weasyprint import HTML  # type: ignore
     except Exception:
         return HTMLResponse(body, headers={"X-PDF-Fallback":
-                                          "weasyprint non installato: restituito HTML print-ready"})
+                                          "WeasyPrint unavailable: returned print-ready HTML"})
     pdf = HTML(string=body).write_pdf()
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f"attachment; filename={kind}_report.pdf"})

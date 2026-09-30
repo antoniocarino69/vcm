@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -36,10 +36,10 @@
 <body>
 <header>
   <h1>VCM — Vulnerability &amp; Compliance</h1>
-  <span class="muted">multi-tenant · Qualys · Nessus · SCC/STIG · PingCastle · Purple Knight</span>
+  <span class="muted">multi-client · Qualys · Nessus · SCC/STIG · PingCastle · Purple Knight</span>
   <div class="toolbar">
     <a class="btn" href="clients.html">Clients &amp; environments</a>
-    <select id="tenant"><option value="">Tutti i clienti</option></select>
+    <select id="tenant"><option value="">All clients</option></select>
     <a class="btn" id="rep-exec" href="#">Executive report</a>
     <a class="btn" id="rep-tech" href="#">Technical report</a>
     <a class="btn" id="rep-csv" href="#">CSV</a>
@@ -47,28 +47,28 @@
 </header>
 <main>
   <div class="card wide">
-    <h2>Overview complessiva</h2>
+    <h2>Overall posture</h2>
     <div class="kpis">
-      <div class="kpi"><b id="k-posture">–</b><span>Postura (0-100)</span></div>
-      <div class="kpi"><b id="k-active">–</b><span>Findings aperti</span></div>
-      <div class="kpi"><b id="k-vuln">–</b><span>Vulnerabilità</span></div>
+      <div class="kpi"><b id="k-posture">–</b><span>Posture (0–100)</span></div>
+      <div class="kpi"><b id="k-active">–</b><span>Open findings</span></div>
+      <div class="kpi"><b id="k-vuln">–</b><span>Vulnerabilities</span></div>
       <div class="kpi"><b id="k-comp">–</b><span>Compliance</span></div>
-      <div class="kpi"><b id="k-fp">–</b><span>False positive</span></div>
+      <div class="kpi"><b id="k-fp">–</b><span>False positives</span></div>
       <div class="kpi"><b id="k-ra">–</b><span>Risk accepted</span></div>
       <div class="kpi"><b id="k-ad">–</b><span>AD Health Score</span></div>
     </div>
   </div>
-  <div class="card"><h2>Distribuzione severità</h2><canvas id="sev-chart"></canvas></div>
-  <div class="card"><h2>Compliance STIG (CAT I/II/III)</h2><canvas id="stig-chart"></canvas></div>
-  <div class="card wide"><h2>Trend aperti vs chiusi</h2><canvas id="trend-chart"></canvas></div>
-  <div class="card"><h2>Top 10 vulnerabilità più diffuse</h2><table id="top-rules">
-    <tr><th>Regola</th><th>Sev</th><th>Host</th></tr></table></div>
-  <div class="card"><h2>Top 10 host più vulnerabili</h2><table id="top-hosts">
-    <tr><th>Host</th><th>Aperti</th><th>Crit/High</th></tr></table></div>
-  <div class="card wide"><h2>Ambienti &amp; importazioni</h2>
+  <div class="card"><h2>Severity distribution</h2><canvas id="sev-chart"></canvas></div>
+  <div class="card"><h2>STIG compliance (CAT I/II/III)</h2><canvas id="stig-chart"></canvas></div>
+  <div class="card wide"><h2>Open vs mitigated findings</h2><canvas id="trend-chart"></canvas></div>
+  <div class="card"><h2>Top 10 widespread vulnerabilities</h2><table id="top-rules">
+    <tr><th>Rule</th><th>Severity</th><th>Host</th></tr></table></div>
+  <div class="card"><h2>Top 10 vulnerable hosts</h2><table id="top-hosts">
+    <tr><th>Host</th><th>Open</th><th>Crit/High</th></tr></table></div>
+  <div class="card wide"><h2>Environments &amp; imports</h2>
     <div class="row">
-      <table id="envs"><tr><th>Cliente</th><th>Ambienti</th></tr></table>
-      <table id="imports"><tr><th>Scanner</th><th>File</th><th>Stato</th><th>Findings</th></tr></table>
+      <table id="envs"><tr><th>Client</th><th>Environments</th></tr></table>
+      <table id="imports"><tr><th>Scanner</th><th>File</th><th>Status</th><th>Findings</th></tr></table>
     </div>
   </div>
 </main>
@@ -114,7 +114,7 @@ async function loadImports(envId){
         `<tr><td>${i.scanner}</td><td>${i.filename}</td><td>${i.status}</td>
          <td>${st.created ?? 0} new / ${st.updated ?? 0} upd / ${st.auto_closed ?? 0} closed</td></tr>`);
     });
-  }catch(e){ /* nessuna importazione */ }
+  }catch(e){ /* no imports */ }
 }
 
 function upsertChart(key, canvasId, config){
@@ -157,16 +157,16 @@ async function loadDashboard(tenantId){
     type: 'line',
     data: { labels: d.trend.map(t=>t.day),
             datasets: [
-              { label: 'Aperti', data: d.trend.map(t=>t.open), borderColor:'#fb923c', tension:.25 },
-              { label: 'Chiusi', data: d.trend.map(t=>t.closed), borderColor:'#34d399', tension:.25 }]},
+              { label: 'Open', data: d.trend.map(t=>t.open), borderColor:'#fb923c', tension:.25 },
+              { label: 'Mitigated', data: d.trend.map(t=>t.closed), borderColor:'#34d399', tension:.25 }]},
     options: { plugins:{legend:{labels:{color:'#e5e7eb'}}},
                scales:{x:{ticks:{color:'#8b98b4'}},y:{ticks:{color:'#8b98b4'},beginAtZero:true}} }
   });
 
-  $('#top-rules').innerHTML = '<tr><th>Regola</th><th>Sev</th><th>Host</th></tr>' +
+  $('#top-rules').innerHTML = '<tr><th>Rule</th><th>Severity</th><th>Host</th></tr>' +
     d.top_rules.map(r=>`<tr><td>${r.rule_id} — ${r.title.slice(0,60)}</td>
       <td>${sevSpan(r.severity)}</td><td>${r.affected_assets}</td></tr>`).join('');
-  $('#top-hosts').innerHTML = '<tr><th>Host</th><th>Aperti</th><th>Crit/High</th></tr>' +
+  $('#top-hosts').innerHTML = '<tr><th>Host</th><th>Open</th><th>Crit/High</th></tr>' +
     d.top_hosts.map(h=>`<tr><td>${h.fqdn || h.ip || h.netbios}</td>
       <td>${h.open_findings}</td><td>${h.open_crit_high}</td></tr>`).join('');
 
@@ -174,7 +174,7 @@ async function loadDashboard(tenantId){
 }
 
 loadTenants().catch(e => document.body.insertAdjacentHTML('afterbegin',
-  `<p style="color:#f87171;padding:1rem">API non raggiungibile: ${e}</p>`));
+  `<p style="color:#f87171;padding:1rem">API unavailable: ${e}</p>`));
 </script>
 </body>
 </html>
