@@ -85,8 +85,9 @@ def test_reads_require_and_enforce_tenant(two_tenants: tuple) -> None:
     a, b = data["a"], data["b"]
 
     assert client.get("/api/findings").status_code == 422
-    rows = client.get("/api/findings", params={"tenant_id": a["tenant"].id}).json()
-    assert {row["id"] for row in rows} == {f.id for f in a["findings"]}
+    page = client.get("/api/findings", params={"tenant_id": a["tenant"].id}).json()
+    assert {row["id"] for row in page["items"]} == {f.id for f in a["findings"]}
+    assert page["total"] == len(a["findings"])
 
     assert client.get(f"/api/findings/{b['findings'][0].id}",
                       params={"tenant_id": a["tenant"].id}).status_code == 404
