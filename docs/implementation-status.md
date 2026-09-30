@@ -9,8 +9,9 @@ scan dates/tags, OS/tag filters and separate VA/remediation campaigns.
 Origin is configured to `git@github.com:antoniocarino69/vcm.git`. Initial
 publication succeeded through the existing authorized SSH key (#0024).
 All six completed working branches are published with upstream tracking;
-remote main was not overwritten. The complete current work is on
-`docs/0018-operational-portal-checklist` until PR review/merge.
+remote main was not overwritten. The published plan is on `docs/0018-operational-portal-checklist`.
+The latest delivered increment is on `feature/0013-scoped-asset-inventory`,
+stacked on `feature/0019-shared-portal-shell`, pending PR review/merge.
 
 ## Completed increments
 
