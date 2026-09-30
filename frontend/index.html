@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VCM — Vulnerability &amp; Compliance Management</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root{--bg:#0b1220;--panel:#111a2e;--line:#1f2b45;--txt:#e5e7eb;--muted:#8b98b4}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+  header{display:flex;align-items:center;gap:1rem;padding:.9rem 1.4rem;border-bottom:1px solid var(--line)}
+  header h1{font-size:1.05rem;margin:0}
+  header .muted{color:var(--muted);font-size:.85rem}
+  main{padding:1.2rem 1.4rem;display:grid;gap:1rem;
+       grid-template-columns:repeat(auto-fit,minmax(22rem,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:.7rem;padding:1rem}
+  .card h2{font-size:.9rem;margin:.1rem 0 .8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .kpis{display:flex;gap:1rem;flex-wrap:wrap}
+  .kpi{background:#0e1730;border:1px solid var(--line);border-radius:.6rem;padding:.7rem 1rem;min-width:9rem}
+  .kpi b{display:block;font-size:1.5rem}
+  .kpi span{color:var(--muted);font-size:.78rem}
+  .wide{grid-column:1/-1}
+  table{width:100%;border-collapse:collapse;font-size:.83rem}
+  th,td{padding:.35rem .5rem;border-bottom:1px solid var(--line);text-align:left}
+  th{color:var(--muted);font-weight:600}
+  .sev{font-weight:700}
+  .critical{color:#f87171}.high{color:#fb923c}.medium{color:#facc15}.low{color:#60a5fa}.info{color:#9ca3af}
+  .row{display:flex;gap:1rem;flex-wrap:wrap}
+  .row>.card{flex:1 1 20rem}
+  .toolbar{margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap}
+  header{flex-wrap:wrap}
+  @media(max-width:600px){main{grid-template-columns:minmax(0,1fr);padding:1rem}header{padding:1rem}.toolbar{margin-left:0}.row{overflow:auto}}
+  select,button{background:#0e1730;color:var(--txt);border:1px solid var(--line);border-radius:.4rem;padding:.35rem .6rem}
+  a[aria-disabled="true"]{opacity:.5;cursor:default}
+  a.btn{color:#93c5fd;text-decoration:none;font-size:.85rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>VCM — Vulnerability &amp; Compliance</h1>
+  <span class="muted">multi-client · Qualys · Nessus · SCC/STIG · PingCastle · Purple Knight</span>
+  <div class="toolbar">
+    <a class="btn" href="clients.html">Clients &amp; environments</a>
+    <select id="tenant"><option value="">All clients</option></select>
+    <a class="btn" id="rep-exec" href="#">Executive report</a>
+    <a class="btn" id="rep-tech" href="#">Technical report</a>
+    <a class="btn" id="rep-csv" href="#">CSV</a>
+  </div>
+</header>
+<main>
+  <p id="dashboard-error" class="wide" role="alert" style="color:#f87171" hidden></p>
+  <div class="card wide">
+    <h2>Overall posture</h2>
+    <div class="kpis">
+      <div class="kpi"><b id="k-posture">–</b><span>Posture (0–100)</span></div>
+      <div class="kpi"><b id="k-active">–</b><span>Open findings</span></div>
+      <div class="kpi"><b id="k-vuln">–</b><span>Vulnerabilities</span></div>
+      <div class="kpi"><b id="k-comp">–</b><span>Compliance</span></div>
+      <div class="kpi"><b id="k-fp">–</b><span>False positives</span></div>
+      <div class="kpi"><b id="k-ra">–</b><span>Risk accepted</span></div>
+      <div class="kpi"><b id="k-ad">–</b><span>AD Health Score</span></div>
+    </div>
+  </div>
+  <div class="card"><h2>Severity distribution</h2><canvas id="sev-chart"></canvas></div>
+  <div class="card"><h2>STIG compliance (CAT I/II/III)</h2><canvas id="stig-chart"></canvas></div>
+  <div class="card wide"><h2>Open vs mitigated findings</h2><canvas id="trend-chart"></canvas></div>
+  <div class="card"><h2>Top 10 widespread vulnerabilities</h2><table id="top-rules">
+    <tr><th>Rule</th><th>Severity</th><th>Host</th></tr></table></div>
+  <div class="card"><h2>Top 10 vulnerable hosts</h2><table id="top-hosts">
+    <tr><th>Host</th><th>Open</th><th>Crit/High</th></tr></table></div>
+  <div class="card wide"><h2>Environments &amp; imports</h2>
+    <div class="row">
+      <table id="envs"><tr><th>Client</th><th>Environments</th></tr></table>
+      <table id="imports"><tr><th>Scanner</th><th>File</th><th>Status</th><th>Findings</th></tr></table>
+    </div>
+  </div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const API = '/api';
+const charts = {};
+let tenants = [], scopeVersion = 0;
+
+async function jget(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Request failed (${response.status}). Please retry.`);
+  return response.json();
+}
+
+function textNode(value) {
+  return document.createTextNode(value == null ? '—' : String(value));
+}
+
+function renderTable(selector, headers, rows) {
+  const table = $(selector);
+  table.replaceChildren();
+  const heading = document.createElement('tr');
+  for (const title of headers) {
+    const cell = document.createElement('th'); cell.textContent = title; heading.append(cell);
+  }
+  table.append(heading);
+  for (const values of rows) {
+    const row = document.createElement('tr');
+    for (const value of values) {
+      const cell = document.createElement('td');
+      cell.append(value instanceof Node ? value : textNode(value));
+      row.append(cell);
+    }
+    table.append(row);
+  }
+}
+
+function severityLabel(value) {
+  const severity = ['critical','high','medium','low','info'].includes(value) ? value : 'info';
+  const span = document.createElement('span');
+  span.className = `sev ${severity}`; span.textContent = severity.toUpperCase();
+  return span;
+}
+
+function showError(error) {
+  $('#dashboard-error').textContent = error.message;
+  $('#dashboard-error').hidden = false;
+}
+
+function setReportLinks(tenantId) {
+  for (const [id, path] of [['#rep-exec','executive'],['#rep-tech','technical'],['#rep-csv','technical']]) {
+    const link = $(id);
+    if (tenantId) {
+      link.href = `${API}/reports/${path}?tenant_id=${encodeURIComponent(tenantId)}${id === '#rep-csv' ? '&format=csv' : ''}`;
+      link.removeAttribute('aria-disabled');
+    } else {
+      link.removeAttribute('href'); link.setAttribute('aria-disabled','true');
+    }
+  }
+}
+
+async function loadEnvironments(tenantId, version) {
+  const clients = tenantId ? tenants.filter(t => t.id === tenantId) : tenants;
+  const groups = await Promise.all(clients.map(async client => ({
+    client, envs: await jget(`${API}/tenants/${client.id}/environments`)
+  })));
+  if (version !== scopeVersion) return;
+  renderTable('#envs', ['Client','Environments'], groups.map(({client,envs}) => [
+    client.name, envs.map(env => `${env.name} (${env.kind})`).join(', ') || '—'
+  ]));
+  if (!tenantId) return;
+  const imports = (await Promise.all(groups.flatMap(({envs}) => envs.map(async env => (
+    await jget(`${API}/environments/${env.id}/imports`)
+  ).map(row => ({...row, environmentName:env.name})))))).flat();
+  if (version !== scopeVersion) return;
+  imports.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
+  renderTable('#imports', ['Environment','Scanner','File','Status','Findings'],
+    imports.slice(0,8).map(row => {
+      const stats = row.stats || {};
+      return [row.environmentName, row.scanner, row.filename, row.status,
+        `${stats.created ?? 0} new / ${stats.updated ?? 0} updated / ${stats.auto_closed ?? 0} mitigated`];
+    }));
+  if (!imports.length) renderTable('#imports', ['Imports'], [['No imports for this client yet.']]);
+}
+
+function upsertChart(key, canvasId, config) {
+  if (typeof Chart === 'undefined') {
+    showError(new Error('Charts could not load. Assessment data is still available.'));
+    return;
+  }
+  if (charts[key]) charts[key].destroy();
+  charts[key] = new Chart($(canvasId), config);
+}
+
+async function loadDashboard(tenantId, version) {
+  const query = tenantId ? `?tenant_id=${encodeURIComponent(tenantId)}` : '';
+  const d = await jget(`${API}/dashboard${query}`);
+  if (version !== scopeVersion) return;
+  $('#k-posture').textContent = d.posture_score;
+  $('#k-active').textContent = d.totals.active;
+  $('#k-vuln').textContent = d.totals.vulnerabilities;
+  $('#k-comp').textContent = d.totals.compliance;
+  $('#k-fp').textContent = d.totals.false_positive;
+  $('#k-ra').textContent = d.totals.risk_accepted;
+  const ad = d.ad_health[0];
+  $('#k-ad').textContent = ad && ad.global_score != null ? ad.global_score : '—';
+  const order = ['critical','high','medium','low','info'];
+  upsertChart('sev', '#sev-chart', {
+    type: 'doughnut',
+    data: { labels: order.map(s=>s.toUpperCase()),
+            datasets: [{ data: order.map(s=>d.severity_distribution[s]),
+              backgroundColor: ['#b91c1c','#ea580c','#ca8a04','#2563eb','#6b7280'] }]},
+    options: { plugins:{legend:{labels:{color:'#e5e7eb'}}} }
+  });
+
+  upsertChart('stig', '#stig-chart', {
+    type: 'bar',
+    data: { labels: ['CAT I','CAT II','CAT III','untagged'],
+            datasets: [{ data: [d.stig_distribution.CAT_I, d.stig_distribution.CAT_II,
+                                d.stig_distribution.CAT_III, d.stig_distribution.untagged],
+                         backgroundColor: ['#b91c1c','#ca8a04','#2563eb','#6b7280'] }]},
+    options: { plugins:{legend:{display:false}},
+               scales:{x:{ticks:{color:'#8b98b4'}},y:{ticks:{color:'#8b98b4'},beginAtZero:true}} }
+  });
+
+  upsertChart('trend', '#trend-chart', {
+    type: 'line',
+    data: { labels: d.trend.map(t=>t.day),
+            datasets: [
+              { label: 'Open', data: d.trend.map(t=>t.open), borderColor:'#fb923c', tension:.25 },
+              { label: 'Mitigated', data: d.trend.map(t=>t.closed), borderColor:'#34d399', tension:.25 }]},
+    options: { plugins:{legend:{labels:{color:'#e5e7eb'}}},
+               scales:{x:{ticks:{color:'#8b98b4'}},y:{ticks:{color:'#8b98b4'},beginAtZero:true}} }
+  });
+
+
+  renderTable('#top-rules', ['Rule','Severity','Hosts'], d.top_rules.map(rule => [
+    `${rule.rule_id} — ${String(rule.title || '').slice(0,60)}`, severityLabel(rule.severity), rule.affected_assets
+  ]));
+  renderTable('#top-hosts', ['Host','Open','Critical / High'], d.top_hosts.map(host => [
+    host.fqdn || host.ip || host.netbios, host.open_findings, host.open_crit_high
+  ]));
+}
+
+async function loadView(tenantId) {
+  const version = ++scopeVersion;
+  $('#dashboard-error').hidden = true;
+  setReportLinks(tenantId);
+  for (const key of Object.keys(charts)) { charts[key].destroy(); delete charts[key]; }
+  document.querySelectorAll('.kpi b').forEach(node => { node.textContent = '…'; });
+  renderTable('#envs', ['Environments'], [['Loading…']]);
+  renderTable('#imports', ['Imports'], [[tenantId ? 'Loading…' : 'Select a client to view imports.']]);
+  renderTable('#top-rules', ['Rules'], [['Loading…']]);
+  renderTable('#top-hosts', ['Hosts'], [['Loading…']]);
+  const url = new URL(location.href);
+  if (tenantId) url.searchParams.set('tenant_id', tenantId); else url.searchParams.delete('tenant_id');
+  history.replaceState(null, '', url);
+  try {
+    await Promise.all([loadDashboard(tenantId, version), loadEnvironments(tenantId, version)]);
+  } catch (error) { if (version === scopeVersion) showError(error); }
+}
+
+async function loadTenants() {
+  tenants = await jget(`${API}/tenants`);
+  const selectedId = new URL(location.href).searchParams.get('tenant_id');
+  const select = $('#tenant');
+  select.replaceChildren(new Option('All clients', ''));
+  for (const tenant of tenants) select.add(new Option(tenant.name, tenant.id));
+  select.value = tenants.some(tenant => tenant.id === selectedId) ? selectedId : '';
+  select.onchange = () => loadView(select.value);
+  await loadView(select.value);
+}
+
+setReportLinks('');
+loadTenants().catch(showError);
+</script>
+</body>
+</html>

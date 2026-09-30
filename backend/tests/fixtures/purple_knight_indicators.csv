@@ -1,0 +1,7 @@
+Indicator Name,Type,Category,Severity,Score,Description,Remediation,Affected Objects
+Unconstrained Delegation,IOE,AD Delegation,Critical,92,Computers with unconstrained Kerberos delegation can capture TGTs of connecting users.,Switch to constrained delegation with protocol transition.,SRV-FILE01; SRV-APP03
+Kerberoastable Accounts,IOE,Kerberos,High,78,Service accounts with SPN and weak password are exposed to Kerberoasting.,Use group managed service accounts (gMSA) with long passwords.,svc_sql; svc_backup; svc_web
+AS-REP Roastable Users,IOE,Account Hygiene,High,74,Users with Do not require Kerberos preauthentication enabled.,Disable the "Do not require Kerberos preauthentication" flag.,testuser1
+Stale Admin Accounts,IOE,Account Hygiene,Medium,55,Privileged accounts inactive for more than 90 days.,Disable or remove stale privileged accounts.,oldadmin1; oldadmin2
+RC4 Kerberos Encryption,IOE,Kerberos,Medium,52,Domain allows RC4 for Kerberos ticket encryption.,Disable RC4 and enforce AES on all accounts.,CORP.LOCAL
+Suspicious Golden Ticket Pattern,IOC,Kerberos,High,80,Ticket lifetime anomalies suggest possible Golden Ticket activity.,Reset krbtgt twice and investigate domain controller logs.,DC01

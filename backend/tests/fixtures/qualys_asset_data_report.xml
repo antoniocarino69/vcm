@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Qualys VMDR - ASSET_DATA_REPORT -->
+<ASSET_DATA_REPORT>
+  <REPORT_NAME>Asset Data Report - Corp</REPORT_NAME>
+  <HOST_LIST>
+    <HOST>
+      <HOST_ID>11122233</HOST_ID>
+      <IP>10.10.2.20</IP>
+      <DNS>dc01.corp.local</DNS>
+      <NETBIOS>DC01</NETBIOS>
+      <OS>Windows Server 2019 Domain Controller</OS>
+      <VULN_INFO_LIST>
+        <VULN_INFO>
+          <QID>105575</QID>
+          <TYPE>VULN</TYPE>
+          <SEVERITY>4</SEVERITY>
+          <PORT>445</PORT>
+          <PROTOCOL>tcp</PROTOCOL>
+          <SSL>0</SSL>
+          <VULN>
+            <TITLE>Windows Netlogon Elevation of Privilege (ZeroLogon)</TITLE>
+            <CVE_ID_LIST>
+              <CVE_ID>CVE-2020-1472</CVE_ID>
+            </CVE_ID_LIST>
+            <CVSS3_BASE>10.0</CVSS3_BASE>
+            <DIAGNOSIS>The remote domain controller is vulnerable to CVE-2020-1472.</DIAGNOSIS>
+            <SOLUTION>Apply the August 2020 security updates and enable enforcement mode.</SOLUTION>
+            <RESULTS>Netlogon secure channel not enforced</RESULTS>
+            <FIRST_FOUND>2026-08-01T04:00:00Z</FIRST_FOUND>
+            <LAST_FOUND>2026-09-29T04:00:00Z</LAST_FOUND>
+          </VULN>
+        </VULN_INFO>
+        <VULN_INFO>
+          <QID>90456</QID>
+          <TYPE>VULN</TYPE>
+          <SEVERITY>1</SEVERITY>
+          <PORT>0</PORT>
+          <PROTOCOL>tcp</PROTOCOL>
+          <VULN>
+            <TITLE>Windows DNS Server Version Information</TITLE>
+            <CVE_ID_LIST/>
+            <DIAGNOSIS>The DNS server discloses its version.</DIAGNOSIS>
+            <SOLUTION>Restrict version disclosure in DNS configuration.</SOLUTION>
+            <RESULTS>Microsoft DNS 6.1.7601</RESULTS>
+          </VULN>
+        </VULN_INFO>
+      </VULN_INFO_LIST>
+    </HOST>
+    <HOST>
+      <HOST_ID>11122234</HOST_ID>
+      <IP>10.10.2.21</IP>
+      <DNS>fs01.corp.local</DNS>
+      <NETBIOS>FS01</NETBIOS>
+      <OS>Windows Server 2022</OS>
+      <VULN_INFO_LIST>
+        <VULN_INFO>
+          <QID>105575</QID>
+          <TYPE>VULN</TYPE>
+          <SEVERITY>4</SEVERITY>
+          <PORT>445</PORT>
+          <PROTOCOL>tcp</PROTOCOL>
+          <VULN>
+            <TITLE>Windows Netlogon Elevation of Privilege (ZeroLogon)</TITLE>
+            <CVE_ID_LIST>
+              <CVE_ID>CVE-2020-1472</CVE_ID>
+            </CVE_ID_LIST>
+            <CVSS3_BASE>10.0</CVSS3_BASE>
+            <DIAGNOSIS>The remote domain controller is vulnerable to CVE-2020-1472.</DIAGNOSIS>
+            <SOLUTION>Apply the August 2020 security updates and enable enforcement mode.</SOLUTION>
+            <RESULTS>Netlogon secure channel not enforced</RESULTS>
+          </VULN>
+        </VULN_INFO>
+      </VULN_INFO_LIST>
+    </HOST>
+  </HOST_LIST>
+</ASSET_DATA_REPORT>
