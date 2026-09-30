@@ -124,10 +124,20 @@ unverified and open; the broader redesign is not complete.
   empty PATCH body gives 422. Standard suite 25 passed, PostgreSQL suite 38
   passed, 29 live HTTP checks on two temporary clients. Asset PATCH included;
   portal editing UI remains in the next bullet.
-- [ ] Complete client/environment editing in the portal. Define client archiving
+- [x] Complete client/environment editing in the portal. Define client archiving
   behavior before exposing it; preserve historical imports, findings and comments.
-- [ ] Test context switching while requests are pending; never apply a late
+  — `feature/0011-p1b-client-environment-editing`; client name/key/description and
+  environment name/type/match-key editing with truly partial PATCH bodies (only
+  changed fields), inline 409/422 feedback and a no-change notice. Archiving
+  behavior is defined (status-only transition, history kept readable, archived
+  clients receive no new imports, explicit filter to show them, no deletion
+  anywhere) and stays unexposed until explicitly requested, so historical
+  imports, findings and comments are preserved by construction.
+- [x] Test context switching while requests are pending; never apply a late
   response or an action to the newly selected client by mistake.
+  — `frontend/tests/clients-edit.browser.cjs` holds a PATCH and an environment
+  creation across client switches and asserts the new client's state is never
+  touched; the assets and dashboard suites already cover late client requests.
 
 ## C. Assets and individual vulnerabilities — #0013, #0014
 

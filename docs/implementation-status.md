@@ -27,7 +27,8 @@ longer pending review.
 | #0017 | Dashboard and generated report labels use English | Rebuilt API/worker; live HTML reports checked |
 
 The portal is published on `0.0.0.0:8080`. No authentication was added.
-Client and environment editing/archiving remain #0011 P1b. Campaigns, finding
+Client/environment editing is delivered (#0011 P1b); client archiving behavior
+is defined but intentionally not exposed yet. Campaigns, finding
 triage UI and upload UI remain separate planned increments.
 
 ## Verification commands
@@ -51,6 +52,7 @@ records or add application runtime dependencies:
 
 ```sh
 NODE_PATH=/root/pw-tools/node_modules node frontend/tests/clients.browser.cjs
+NODE_PATH=/root/pw-tools/node_modules node frontend/tests/clients-edit.browser.cjs
 NODE_PATH=/root/pw-tools/node_modules node frontend/tests/dashboard.browser.cjs
 ```
 
@@ -150,3 +152,21 @@ scoped findings/dashboard/report; cross-scope 4xx; per-finding decisions leave
 the other client untouched); temporary clients removed afterwards. Known issue
 #0025 reproduced live (502 after API recreation) and recovered with
 `docker compose restart frontend`; its fix remains a separate increment.
+
+## Client/environment editing increment (#0011 P1b)
+
+`/clients.html` gained an "Edit selected client" form (name, key, description)
+and per-row environment editing (name, type, match key). Saving sends truly
+partial PATCH bodies with only the changed fields; duplicates report the server
+409 message inline, invalid values report 422, and a save without changes
+answers "No changes to save." without any request. Scope guards hold: a late
+PATCH response or a late environment creation never updates the client selected
+in the meantime. Client archiving is defined (status-only transition; history
+stays readable; archived clients receive nothing new; explicit filter; no
+deletion) and deliberately not exposed yet.
+
+Verification: `frontend/tests/clients-edit.browser.cjs` written first and
+observed failing, then passing; the four existing browser suites pass after
+form-scoped selector updates; a live UI↔API flow on the real stack created,
+edited and re-read a temporary client and environment (including mobile at
+390px); temporary records removed.
