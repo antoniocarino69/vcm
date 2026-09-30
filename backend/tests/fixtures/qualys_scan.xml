@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SCAN SYSTEM "https://qualys.com/qtd/scan.dtd">
+<!-- Qualys VMDR - export risultati scansione (formato SCAN) -->
+<SCAN>
+  <SCAN_DATE>2026-09-29T02:15:00Z</SCAN_DATE>
+  <HOST_LIST>
+    <HOST>
+      <IP>10.10.1.10</IP>
+      <DNS>web01.corp.local</DNS>
+      <NETBIOS>WEB01</NETBIOS>
+      <OS>Windows Server 2019</OS>
+      <SERVICES>
+        <SERVICE>
+          <PORT>443</PORT>
+          <PROTOCOL>tcp</PROTOCOL>
+          <VULNS>
+            <VULN>
+              <QID>38173</QID>
+              <SEVERITY>3</SEVERITY>
+              <VULN_TITLE>SSL/TLS Certificate Signature Verification Failure</VULN_TITLE>
+              <CVE_ID_LIST>
+                <CVE_ID>CVE-2020-0601</CVE_ID>
+              </CVE_ID_LIST>
+              <CVSS3_BASE>6.5</CVSS3_BASE>
+              <CVSS3_VECTOR>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N</CVSS3_VECTOR>
+              <DIAGNOSIS>The certificate chain could not be verified up to a trusted root.</DIAGNOSIS>
+              <SOLUTION>Reissue the server certificate from a trusted CA.</SOLUTION>
+              <RESULTS>openssl s_client shows verify error 20</RESULTS>
+            </VULN>
+            <VULN>
+              <QID>38658</QID>
+              <SEVERITY>4</SEVERITY>
+              <VULN_TITLE>SSL/TLS Server supports TLSv1.0</VULN_TITLE>
+              <CVE_ID_LIST>
+                <CVE_ID>CVE-2011-3389</CVE_ID>
+                <CVE_ID>CVE-2014-3566</CVE_ID>
+              </CVE_ID_LIST>
+              <CVSS3_BASE>7.4</CVSS3_BASE>
+              <DIAGNOSIS>TLSv1.0 is enabled and negotiable.</DIAGNOSIS>
+              <SOLUTION>Disable TLSv1.0 and TLSv1.1 on the listener.</SOLUTION>
+              <RESULTS>Protocol selected: TLSv1.0</RESULTS>
+            </VULN>
+          </VULNS>
+        </SERVICE>
+        <SERVICE>
+          <PORT>3389</PORT>
+          <PROTOCOL>tcp</PROTOCOL>
+          <VULNS>
+            <VULN>
+              <QID>90394</QID>
+              <SEVERITY>5</SEVERITY>
+              <VULN_TITLE>Windows Scripting Engine Remote Code Execution</VULN_TITLE>
+              <CVE_ID_LIST>
+                <CVE_ID>CVE-2021-34527</CVE_ID>
+              </CVE_ID_LIST>
+              <CVSS3_BASE>9.8</CVSS3_BASE>
+              <DIAGNOSIS>The remote host is missing a critical security update.</DIAGNOSIS>
+              <SOLUTION>Install the vendor patch from the Microsoft Security Update.</SOLUTION>
+              <RESULTS>Remote registry reports build 17763.1 (unpatched)</RESULTS>
+            </VULN>
+          </VULNS>
+        </SERVICE>
+      </SERVICES>
+    </HOST>
+    <HOST>
+      <IP>10.10.1.11</IP>
+      <DNS>app02.corp.local</DNS>
+      <NETBIOS>APP02</NETBIOS>
+      <OS>Windows Server 2022</OS>
+      <SERVICES>
+        <SERVICE>
+          <PORT>445</PORT>
+          <PROTOCOL>tcp</PROTOCOL>
+          <VULNS>
+            <VULN>
+              <QID>91791</QID>
+              <SEVERITY>2</SEVERITY>
+              <VULN_TITLE>SMB Signing Not Required</VULN_TITLE>
+              <CVE_ID_LIST/>
+              <CVSS3_BASE>4.3</CVSS3_BASE>
+              <DIAGNOSIS>The remote service does not require SMB signing.</DIAGNOSIS>
+              <SOLUTION>Enforce "Microsoft network server: Digitally sign communications (always)".</SOLUTION>
+              <RESULTS>Signing: disabled</RESULTS>
+            </VULN>
+          </VULNS>
+        </SERVICE>
+      </SERVICES>
+    </HOST>
+  </HOST_LIST>
+</SCAN>

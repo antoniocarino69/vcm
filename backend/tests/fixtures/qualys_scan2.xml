@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE SCAN SYSTEM "https://qualys.com/qtd/scan.dtd">
+<!-- Qualys VMDR - scansione successiva: solo QID 38173 su web01 -->
+<SCAN>
+  <SCAN_DATE>2026-09-30T02:15:00Z</SCAN_DATE>
+  <HOST_LIST>
+    <HOST>
+      <IP>10.10.1.10</IP>
+      <DNS>web01.corp.local</DNS>
+      <NETBIOS>WEB01</NETBIOS>
+      <OS>Windows Server 2019</OS>
+      <SERVICES>
+        <SERVICE>
+          <PORT>443</PORT>
+          <PROTOCOL>tcp</PROTOCOL>
+          <VULNS>
+            <VULN>
+              <QID>38173</QID>
+              <SEVERITY>3</SEVERITY>
+              <VULN_TITLE>SSL/TLS Certificate Signature Verification Failure</VULN_TITLE>
+              <CVE_ID_LIST>
+                <CVE_ID>CVE-2020-0601</CVE_ID>
+              </CVE_ID_LIST>
+              <CVSS3_BASE>6.5</CVSS3_BASE>
+              <DIAGNOSIS>The certificate chain could not be verified up to a trusted root.</DIAGNOSIS>
+              <SOLUTION>Reissue the server certificate from a trusted CA.</SOLUTION>
+              <RESULTS>openssl s_client shows verify error 20</RESULTS>
+            </VULN>
+          </VULNS>
+        </SERVICE>
+      </SERVICES>
+    </HOST>
+  </HOST_LIST>
+</SCAN>

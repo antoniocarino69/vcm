@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<NessusClientData_v2>
+  <Policy><policyName>Corporate Scan</policyName></Policy>
+  <Report name="corp-scan-2026-09-29">
+    <ReportHost name="10.10.1.10">
+      <HostProperties>
+        <tag name="host-ip">10.10.1.10</tag>
+        <tag name="host-fqdn">web01.corp.local</tag>
+        <tag name="netbios-name">WEB01</tag>
+        <tag name="operating-system">Windows Server 2019</tag>
+      </HostProperties>
+      <ReportItem port="443" protocol="tcp" svc_name="www" pluginID="35291" pluginName="SSL Certificate Cannot Be Trusted" pluginFamily="General">
+        <risk_factor>Medium</risk_factor>
+        <cvss3_base_score>6.5</cvss3_base_score>
+        <cvss3_vector>CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N</cvss3_vector>
+        <cve>CVE-2020-0601</cve>
+        <synopsis>The SSL certificate for this service cannot be trusted.</synopsis>
+        <description>The X.509 certificate chain is broken.</description>
+        <solution>Replace the certificate with one issued by a trusted CA.</solution>
+        <plugin_output>Broken chain found</plugin_output>
+      </ReportItem>
+      <ReportItem port="3389" protocol="tcp" svc_name="msrdp" pluginID="51192" pluginName="SSL Weak Cipher Suites Supported" pluginFamily="SSL">
+        <risk_factor>Medium</risk_factor>
+        <cvss_base_score>5.0</cvss_base_score>
+        <synopsis>The remote service supports weak cipher suites.</synopsis>
+        <description>Anonymous cipher suites are enabled.</description>
+        <solution>Disable NULL, EXPORT and anonymous cipher suites.</solution>
+        <plugin_output>TLS_RSA_WITH_NULL_SHA</plugin_output>
+      </ReportItem>
+      <ReportItem port="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+        <risk_factor>None</risk_factor>
+        <synopsis>Information about the scan.</synopsis>
+        <description>Scanner version information.</description>
+        <plugin_output>Scanner version 10.7.2</plugin_output>
+      </ReportItem>
+    </ReportHost>
+    <ReportHost name="10.10.3.30">
+      <HostProperties>
+        <tag name="host-ip">10.10.3.30</tag>
+        <tag name="host-fqdn">lnx01.corp.local</tag>
+        <tag name="operating-system">Ubuntu 22.04</tag>
+      </HostProperties>
+      <ReportItem port="22" protocol="tcp" svc_name="ssh" pluginID="153445" pluginName="OpenSSH 8.9p1 Known Vulnerabilities" pluginFamily="Misc.">
+        <risk_factor>High</risk_factor>
+        <cvss3_base_score>8.1</cvss3_base_score>
+        <cve>CVE-2023-38408</cve>
+        <synopsis>The remote OpenSSH version is affected by a vulnerability.</synopsis>
+        <description>Agent forwarding vulnerability.</description>
+        <solution>Upgrade to OpenSSH 9.3p2 or later.</solution>
+        <plugin_output>OpenSSH_8.9p1 detected</plugin_output>
+      </ReportItem>
+    </ReportHost>
+  </Report>
+</NessusClientData_v2>

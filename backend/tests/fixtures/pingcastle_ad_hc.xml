@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- PingCastle - Healthcheck XML export (excerpt) -->
+<HealthcheckData>
+  <GenerationDate>2026-09-28T03:12:00</GenerationDate>
+  <Domain>corp.local</Domain>
+  <GlobalScore>52</GlobalScore>
+  <HealthcheckRiskRules>
+    <HealthcheckRiskRule>
+      <RiskId>PRIV-ADMINCOUNT</RiskId>
+      <Title>Accounts with AdminCount set but not member of privileged groups</Title>
+      <Category>Privileged Accounts</Category>
+      <Points>15</Points>
+      <TechnicalDetail>5 users have stale adminCount: svc_backup, svc_sql, oldadmin1, oldadmin2, testadm</TechnicalDetail>
+      <Remediation>Reset adminCount attribute and review group memberships.</Remediation>
+    </HealthcheckRiskRule>
+    <HealthcheckRiskRule>
+      <RiskId>TRUST-FOREIGN</RiskId>
+      <Title>Domain trust with weak configuration</Title>
+      <Category>Domain Trust</Category>
+      <Points>25</Points>
+      <TechnicalDetail>Trust "legacy.corp.local" is bidirectional with SID filtering disabled</TechnicalDetail>
+      <Remediation>Enable SID filtering or remove the trust.</Remediation>
+    </HealthcheckRiskRule>
+    <HealthcheckRiskRule>
+      <RiskId>ANOM-KRBTGT</RiskId>
+      <Title>krbtgt password older than 180 days</Title>
+      <Category>Anomalies</Category>
+      <Points>12</Points>
+      <TechnicalDetail>krbtgt last reset 2025-11-01</TechnicalDetail>
+      <Remediation>Double reset of the krbtgt password (2x with 10 hours interval).</Remediation>
+    </HealthcheckRiskRule>
+    <HealthcheckRiskRule>
+      <RiskId>DELEG-CONSTRAINED</RiskId>
+      <Title>Computer with unconstrained delegation</Title>
+      <Category>Delegation</Category>
+      <Points>20</Points>
+      <TechnicalDetail>SRV-FILE01, SRV-APP03</TechnicalDetail>
+      <Remediation>Switch to constrained delegation with protocol transition.</Remediation>
+    </HealthcheckRiskRule>
+  </HealthcheckRiskRules>
+</HealthcheckData>
