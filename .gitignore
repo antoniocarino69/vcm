@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Runtime / dati locali
+/var/
+*.log
+/tmp/
+uploads/
+reports/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Docker override locale (non versionare override personali)
+docker-compose.override.yml
+
+# Report generati
+*.pdf
+!frontend/**

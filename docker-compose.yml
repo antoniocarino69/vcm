@@ -1,0 +1,77 @@
+# VCM — Vulnerability & Compliance Management
+# Stack: FastAPI + Celery/Redis + PostgreSQL (JSONB) + frontend statico (nginx)
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: vcm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vcm}
+      POSTGRES_DB: vcm
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vcm -d vcm"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    environment: &appenv
+      DATABASE_URL: postgresql+psycopg://vcm:${POSTGRES_PASSWORD:-vcm}@postgres:5432/vcm
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_DIR: /var/lib/vcm/uploads
+      REPORTS_DIR: /var/lib/vcm/reports
+      INGEST_BATCH_SIZE: ${INGEST_BATCH_SIZE:-500}
+    volumes:
+      - uploads:/var/lib/vcm/uploads
+      - reports:/var/lib/vcm/reports
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build: ./backend
+    environment: *appenv
+    volumes:
+      - uploads:/var/lib/vcm/uploads
+      - reports:/var/lib/vcm/reports
+    # parsing asincrono dei report giganti: un file per worker
+    command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=${WORKER_CONCURRENCY:-2}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    image: nginx:1.27-alpine
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:
+  reports:
