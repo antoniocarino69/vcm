@@ -50,13 +50,15 @@ async function selectClient(client) {
   element('environment-form').reset();
   message('environment-error');
   const url = new URL(location.href);
-  if (client) url.searchParams.set('tenant_id', client.id); else url.searchParams.delete('tenant_id');
-  history.replaceState(null, '', url);
+  const requestedEnvironment = url.searchParams.get('tenant_id') === client?.id ? url.searchParams.get('environment_id') : null;
+  Portal.scope(client);
+
   element('environment-status').textContent = client ? 'Loading environments…' : 'Select a client to view or create environments.';
   if (!client) return;
   try {
     const rows = await request(`/tenants/${client.id}/environments`);
     if (version !== scopeVersion) return;
+    Portal.scope(client, rows.find(env => env.id === requestedEnvironment));
     environments = rows;
     environmentsLoaded = true;
     for (const env of rows) {

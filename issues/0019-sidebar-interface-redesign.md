@@ -12,3 +12,16 @@ Update each completed increment with its commit/PR, real verification and push.
 
 ## Status
 - Open
+
+## First increment — 2026-09-30
+
+- Shared sidebar/top bar for Overview and Clients & environments, validated
+  client/environment URL navigation, environment-aware dashboard/import/report
+  links, compact summary and local Chart.js runtime with MIT license.
+- Design/source provenance and synthetic desktop/mobile previews:
+  `docs/portal-shell-design.md`.
+- Verification: backend 24 passed / 5 optional DB cases skipped; all three browser
+  scripts passed; live two-client Nessus/Qualys ingest and scoped report/browser
+  checks passed. Fixture data removed. Nginx recovery recorded separately (#0025).
+- Branch: `feature/0019-shared-portal-shell`. Publication pending.
+- In progress: broader list/detail layouts and return state remain open.

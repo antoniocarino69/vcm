@@ -64,3 +64,18 @@ feedback, but concurrent conflicting requests still need the API validation
 and error handling planned in #0009. AD fallback, upload robustness and
 compliance lifecycle fixes remain #0005–#0007. No milestone is marked complete
 solely because its first increment is delivered.
+
+## Shared shell increment (#0019)
+
+Overview and Clients & environments now share a desktop sidebar and mobile menu.
+Client/environment context is retained between these pages; Overview offers an
+explicit all-client summary and validates environment ownership before applying
+its dashboard/import/report filter. Chart.js 4.4.8 is served locally.
+See [design, provenance and synthetic previews](portal-shell-design.md).
+
+Backend suite: 24 passed, 5 optional PostgreSQL tests skipped. All three browser
+scripts passed. Live two-client Nessus/Qualys upload/import/finding/dashboard/
+report checks and mobile navigation passed; temporary fixture records removed.
+Publication pending on `feature/0019-shared-portal-shell`. Asset/finding UI and
+broader #0019 acceptance remain open. During rebuild, nginx needed a restart to
+resolve the recreated API's address; deployment follow-up is tracked in #0025.
