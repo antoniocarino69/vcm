@@ -38,4 +38,7 @@ API/schema increments before being presented as implemented behavior.
 - Four browser suites passed; live two-client Nessus/Qualys ingest, asset filter/
   detail, dashboard/report and HTTP scope/validation checks passed. Fixture data
   removed. No schema, lifecycle, legacy mutation routes or authentication changes.
-- Publication pending. Asset editing/moving and full observation history remain open.
+- Published implementation: `790c70b`; remote branch hash verified. Asset editing/moving and full observation history remain open.
+- Draft PR creation was rejected by the GitHub integration (HTTP 403,
+  `Resource not accessible by integration`); tracked in #0026. Branch publication
+  succeeded. No PR or merge is claimed.

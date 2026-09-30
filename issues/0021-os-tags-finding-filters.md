@@ -21,6 +21,6 @@ Update each completed increment with its commit/PR, real verification and push.
 - PostgreSQL tests cover differing/missing OS, literal wildcards, overlapping
   client tags, moved assets and filtering before pages. Live Nessus Ubuntu and
   Windows records verified. See `docs/asset-inventory.md`.
-- Publication pending on `feature/0013-scoped-asset-inventory`.
+- Implementation published as `790c70b` on `feature/0013-scoped-asset-inventory`; remote branch hash verified.
 - Finding OS/tag filters, other tag sources, observations/date/campaign filtering
   and matching exports remain open; the complete issue is not delivered.

@@ -93,6 +93,10 @@ Standard suite: 24 passed / 9 optional DB cases skipped; PostgreSQL suite: 33 pa
 Four mocked browser suites and the real two-client Nessus/Qualys upload → completed
 import → assets/findings → dashboard/report flow passed, including live asset
 browser navigation and HTTP scope/validation checks. Temporary test clients removed.
-Publication pending on `feature/0013-scoped-asset-inventory`.
+Implementation published as `790c70b` on `feature/0013-scoped-asset-inventory`; remote branch hash verified.
 Asset mutations, finding decisions, complete observation history and broader
 OS/tag/export filtering remain separate increments.
+
+Draft PR creation for the inventory increment failed with GitHub connector HTTP
+403 (`Resource not accessible by integration`), tracked in #0026. The branch is
+published; no PR or merge was created. [Review the isolated increment](https://github.com/antoniocarino69/vcm/compare/feature%2F0019-shared-portal-shell...feature%2F0013-scoped-asset-inventory).
