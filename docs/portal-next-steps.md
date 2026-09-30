@@ -50,9 +50,13 @@ files or command output.
 - [ ] Prepare a reviewable layout for desktop and narrow screens, using realistic
   asset/finding tables and empty/error states. Review it before implementing
   the broader redesign; avoid building every page at once.
-- [ ] Implement a shared application shell and sidebar for the existing pages.
-- [ ] Keep the active client and environment visible throughout navigation.
-  Allow all environments of one client; make an all-client summary explicit.
+- [x] Implement a shared application shell and sidebar for the existing pages —
+  `c4346e0`, published on `feature/0019-shared-portal-shell`; all three Chromium
+  regressions and live API navigation passed. [Design and previews](portal-shell-design.md).
+- [x] Keep the active client and environment visible throughout existing-page navigation.
+  Allow all environments of one client; make an all-client summary explicit —
+  `c4346e0`; validated environment URLs, pending-client responses and scoped
+  dashboard/import/report requests verified in Chromium and on the real stack.
 - [ ] Provide consistent breadcrumbs, page titles, row actions and keyboard access;
   collapse the sidebar on mobile without hiding the active scope.
 - [ ] Preserve the selected scope, filters and list position when opening an
@@ -84,6 +88,11 @@ patterns. Replace the repeated generic card grid and oversized KPI panels with
 layouts appropriate to each task. Do not fill the sidebar with dead links or
 present empty placeholder pages as completed features. Keep runtime assets
 available locally for air-gapped use.
+
+First shell increment: `c4346e0` is published. Reference source/edition/license
+notes and desktop/mobile previews are in [the design record](portal-shell-design.md).
+Asset/finding list/detail design, row actions and return-position state remain
+unverified and open; the broader redesign is not complete.
 
 ## B. Client/environment scope and management — #0004, #0009, #0011 P1b
 

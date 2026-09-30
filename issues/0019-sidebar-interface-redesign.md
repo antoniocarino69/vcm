@@ -23,5 +23,5 @@ Update each completed increment with its commit/PR, real verification and push.
 - Verification: backend 24 passed / 5 optional DB cases skipped; all three browser
   scripts passed; live two-client Nessus/Qualys ingest and scoped report/browser
   checks passed. Fixture data removed. Nginx recovery recorded separately (#0025).
-- Branch: `feature/0019-shared-portal-shell`. Publication pending.
+- Branch: `feature/0019-shared-portal-shell`. Published implementation: `c4346e0`; remote branch hash verified.
 - In progress: broader list/detail layouts and return state remain open.

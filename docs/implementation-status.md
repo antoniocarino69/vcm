@@ -76,6 +76,7 @@ See [design, provenance and synthetic previews](portal-shell-design.md).
 Backend suite: 24 passed, 5 optional PostgreSQL tests skipped. All three browser
 scripts passed. Live two-client Nessus/Qualys upload/import/finding/dashboard/
 report checks and mobile navigation passed; temporary fixture records removed.
-Publication pending on `feature/0019-shared-portal-shell`. Asset/finding UI and
+Implementation published as `c4346e0` on `feature/0019-shared-portal-shell`
+with the remote hash verified. Asset/finding UI and
 broader #0019 acceptance remain open. During rebuild, nginx needed a restart to
 resolve the recreated API's address; deployment follow-up is tracked in #0025.
