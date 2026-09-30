@@ -50,13 +50,18 @@ files or command output.
 - [ ] Prepare a reviewable layout for desktop and narrow screens, using realistic
   asset/finding tables and empty/error states. Review it before implementing
   the broader redesign; avoid building every page at once.
-- [ ] Implement a shared application shell and sidebar for the existing pages.
-- [ ] Keep the active client and environment visible throughout navigation.
-  Allow all environments of one client; make an all-client summary explicit.
+- [x] Implement a shared application shell and sidebar for the existing pages —
+  `c4346e0`, published on `feature/0019-shared-portal-shell`; all three Chromium
+  regressions and live API navigation passed. [Design and previews](portal-shell-design.md).
+- [x] Keep the active client and environment visible throughout existing-page navigation.
+  Allow all environments of one client; make an all-client summary explicit —
+  `c4346e0`; validated environment URLs, pending-client responses and scoped
+  dashboard/import/report requests verified in Chromium and on the real stack.
 - [ ] Provide consistent breadcrumbs, page titles, row actions and keyboard access;
   collapse the sidebar on mobile without hiding the active scope.
 - [ ] Preserve the selected scope, filters and list position when opening an
-  asset/finding and returning to its list.
+  asset/finding and returning to its list. Asset list/detail return query, page,
+  scroll and row focus verified in `790c70b`; finding workflow remains open.
 - [ ] Verify the real browser workflow at desktop/mobile sizes and publish the
   completed increment. Refactoring, new features and unrelated fixes use
   separate commits/PRs.
@@ -85,6 +90,11 @@ layouts appropriate to each task. Do not fill the sidebar with dead links or
 present empty placeholder pages as completed features. Keep runtime assets
 available locally for air-gapped use.
 
+First shell increment: `c4346e0` is published. Reference source/edition/license
+notes and desktop/mobile previews are in [the design record](portal-shell-design.md).
+Asset/finding list/detail design, row actions and return-position state remain
+unverified and open; the broader redesign is not complete.
+
 ## B. Client/environment scope and management — #0004, #0009, #0011 P1b
 
 - [ ] Harden API scope for every list, detail, comment, status change and bulk action;
@@ -100,11 +110,17 @@ available locally for air-gapped use.
 
 ## C. Assets and individual vulnerabilities — #0013, #0014
 
-- [ ] Implement an asset inventory with pagination/sorting and columns for
+- [x] Implement an asset inventory with pagination/sorting and columns for
   IP, FQDN/NetBIOS, **operating system**, environment, criticality, tags,
-  last observation and open finding counts.
+  last observation and open finding counts — `790c70b`, published on
+  `feature/0013-scoped-asset-inventory`; 33 PostgreSQL/backend tests, four browser
+  suites and live two-client ingest/inventory checks passed.
+  [Contract and synthetic previews](asset-inventory.md).
 - [ ] Implement an asset detail page with identities, OS, tags, current environment,
   historical environment snapshots/moves, imports and associated findings.
+  Read-only identities/current attributes, paginated finding snapshots/moves and
+  proven latest/closure import references delivered in `790c70b`; complete import
+  observation coverage remains #0020, so this full-history item stays open.
 - [ ] Implement a vulnerability list where each row identifies one finding on
   one asset, with client/environment, asset, OS, rule/CVE, severity, status,
   tags, scanner, port and first/last observation.
@@ -182,7 +198,10 @@ Ensure failed/cancelled imports and retries cannot create misleading association
 
 ## E. Filters, especially operating system and tags — #0021
 
-- [ ] Add server-side OS filters to asset and vulnerability lists. Join findings
+- [ ] Add server-side OS filters to asset and vulnerability lists. Asset filters
+  delivered in `790c70b`: current OS substring, Windows/Linux markers and Unknown,
+  applied before count/pagination; see [filter contract](asset-inventory.md).
+  Finding-side filters remain open. Join findings
   to the correct asset under explicit tenant scope; paginate **after** filtering.
 - [ ] Provide OS value search and common family choices such as Windows/Linux,
   including **Unknown**; preserve exact scanner/asset OS text and make normalization

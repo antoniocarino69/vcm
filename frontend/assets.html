@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Assets — VCM</title><link rel="stylesheet" href="portal.css">
+<script src="shell.js" defer></script><script src="asset-context.js" defer></script><script src="assets.js" defer></script></head>
+<body><main>
+<div class="page-heading"><p class="eyebrow">Operations / Assets</p><h1>Assets</h1><p>Inventory and current operating systems for the selected client.</p></div>
+<p id="page-error" class="error" role="alert" hidden></p>
+<div class="scope-controls"><div><label for="tenant">Client</label><select id="tenant" disabled><option>Loading clients…</option></select></div><div><label for="environment">Environment</label><select id="environment" disabled><option value="">All environments</option></select></div></div>
+<form id="filters" class="inventory-filters">
+<div><label for="search">IP, FQDN or NetBIOS</label><input id="search" maxlength="200" placeholder="Search identities"></div>
+<div><label for="os-family">OS family</label><select id="os-family"><option value="">Any OS</option><option value="windows">Windows</option><option value="linux">Linux</option><option value="unknown">Unknown</option></select></div>
+<div><label for="os-search">OS text contains</label><input id="os-search" maxlength="200" placeholder="Server 2022"></div>
+<div><label for="tags">Asset tags <span class="muted">(one per line)</span></label><textarea id="tags" rows="1" placeholder="tier:critical" aria-describedby="tag-help"></textarea></div>
+<div><label for="sort">Sort</label><select id="sort"><option value="ip:asc">IP address ↑</option><option value="ip:desc">IP address ↓</option><option value="fqdn:asc">FQDN ↑</option><option value="os:asc">Operating system ↑</option><option value="environment:asc">Environment ↑</option><option value="criticality:desc">Criticality ↓</option><option value="last_seen:desc">Last observed ↓</option><option value="open_findings:desc">Open findings ↓</option></select></div>
+<div><label for="limit">Rows per page</label><select id="limit"><option>25</option><option selected>50</option><option>100</option></select></div>
+<div class="filter-actions"><button type="submit">Apply filters</button><button id="clear" type="button" class="secondary">Clear filters</button></div>
+</form>
+<p id="tag-help" class="hint">Current OS text is preserved. Windows matches its name; Linux matches Linux, Ubuntu, Debian, RHEL/Red Hat, CentOS, Fedora, Rocky Linux, AlmaLinux, SUSE/openSUSE; Unknown matches missing or blank OS. Asset tags use key or key:value; all selected tags must match.</p>
+<div id="filter-chips" class="filter-chips" aria-label="Active filters"></div>
+<section class="panel inventory-panel" aria-label="Asset inventory">
+<p id="list-status" role="status">Select a client to load assets.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Asset table"><table><thead><tr><th>IP address</th><th>FQDN / NetBIOS</th><th>Operating system</th><th>Current environment</th><th>Criticality</th><th>Asset tags</th><th>Last observed (UTC)</th><th>Open findings</th><th>Action</th></tr></thead><tbody id="asset-rows"></tbody></table></div>
+<p class="hint">Open counts include all retained finding snapshots for each asset, including previous environments.</p>
+<div class="pagination"><button id="previous" type="button" class="secondary" disabled>Previous</button><span id="page-position"></span><button id="next" type="button" class="secondary" disabled>Next</button></div>
+</section></main></body></html>
