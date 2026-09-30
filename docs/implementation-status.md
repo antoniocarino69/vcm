@@ -10,8 +10,11 @@ Origin is configured to `git@github.com:antoniocarino69/vcm.git`. Initial
 publication succeeded through the existing authorized SSH key (#0024).
 All six completed working branches are published with upstream tracking;
 remote main was not overwritten. The published plan is on `docs/0018-operational-portal-checklist`.
-The latest delivered increment is on `feature/0013-scoped-asset-inventory`,
-stacked on `feature/0019-shared-portal-shell`, pending PR review/merge.
+GitHub state reconciled on 2026-09-30: PR #1 (`docs/0018-operational-portal-checklist`)
+and PR #2 (`feature/0013-scoped-asset-inventory`) were merged into `main` as
+merge commit `19c3d69`. Sidebar, client/environment management, asset inventory
+and read-only asset detail are therefore on `main`; the inventory branch is no
+longer pending review.
 
 ## Completed increments
 
@@ -99,5 +102,26 @@ Asset mutations, finding decisions, complete observation history and broader
 OS/tag/export filtering remain separate increments.
 
 Draft PR creation for the inventory increment failed with GitHub connector HTTP
-403 (`Resource not accessible by integration`), tracked in #0026. The branch is
-published; no PR or merge was created. [Review the isolated increment](https://github.com/antoniocarino69/vcm/compare/feature%2F0019-shared-portal-shell...feature%2F0013-scoped-asset-inventory).
+403 (`Resource not accessible by integration`), tracked in #0026. A PR was later
+created and merged as PR #2 (`19c3d69`); the connector limitation remains worth
+monitoring for future PRs.
+
+## Partial PATCH contract increment (#0009)
+
+`PATCH /api/tenants/{id}` (new), `PATCH /api/environments/{id}` and
+`PATCH /api/assets/{id}` now apply only the fields explicitly provided: omitted
+metadata (name, slug, kind, match_key, tags, criticality, identities, OS) is
+preserved. Input schemas validate slug/name text, environment kind/match_key,
+asset IP (single address, not a network), criticality 1-5 and string tag maps.
+Duplicate tenant slugs and duplicate environment names within one client give
+409; missing targets give 404; empty PATCH bodies and invalid values give 422.
+Creation endpoints gained the same validation and 409 handling instead of 500.
+Client status/archiving is deliberately not editable yet.
+
+Verification: test regressions written first (observed failing), standard suite
+25 passed / 13 optional DB cases skipped, PostgreSQL suite 38 passed, and 29
+live HTTP checks against the rebuilt stack with two temporary clients
+(including cross-client same-name environments). Temporary client records were
+removed after verification. Portal editing UI remains a separate increment
+(#0011 P1b); versioned migrations and ORM constraint alignment are delivered
+with #0004.

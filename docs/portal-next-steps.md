@@ -101,8 +101,15 @@ unverified and open; the broader redesign is not complete.
   validate that environment, asset, import and finding belong to the selected client.
 - [ ] Add tenant consistency migrations and regression tests with two clients,
   including child history/comments and existing populated volumes.
-- [ ] Support partial edits for client/environment metadata without resetting
-  omitted fields. Handle duplicates/invalid values as meaningful 4xx responses.
+- [x] Support partial edits for client/environment metadata without resetting
+  omitted fields. Handle duplicates/invalid values as meaningful 4xx responses —
+  `9c1631d` on `fix/0009-patch-contracts`; PATCH tenants/environments/assets apply only
+  explicitly provided fields (tested: omitted fields preserved), duplicates give
+  409 (per-client environment names, tenant slugs), invalid values give 422
+  (slug/name/kind/match_key/IP/criticality/tags), missing IDs give 404 and an
+  empty PATCH body gives 422. Standard suite 25 passed, PostgreSQL suite 38
+  passed, 29 live HTTP checks on two temporary clients. Asset PATCH included;
+  portal editing UI remains in the next bullet.
 - [ ] Complete client/environment editing in the portal. Define client archiving
   behavior before exposing it; preserve historical imports, findings and comments.
 - [ ] Test context switching while requests are pending; never apply a late
