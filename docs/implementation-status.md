@@ -1,6 +1,6 @@
 # Implementation status
 
-Updated: 2026-09-30. Product text and new documentation use English.
+Updated: 2026-10-01. Product text and new documentation use English.
 
 The active product checklist is [portal-next-steps.md](portal-next-steps.md).
 It includes sidebar redesign, individual asset/finding workflows, optional
@@ -62,10 +62,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 ## Known remaining constraints
 
-API scope hardening and database tenant constraints remain #0004. Creation
-uses the existing endpoints: browser duplicate checks provide immediate
-feedback, but concurrent conflicting requests still need the API validation
-and error handling planned in #0009. AD fallback, upload robustness and
+API scope hardening and database tenant constraints are delivered (#0004).
+Creation and edits use validated endpoints with 404/409/422 handling (#0009);
+portal editing UI remains #0011 P1b. AD fallback, upload robustness and
 compliance lifecycle fixes remain #0005–#0007. No milestone is marked complete
 solely because its first increment is delivered.
 
@@ -125,3 +124,29 @@ live HTTP checks against the rebuilt stack with two temporary clients
 removed after verification. Portal editing UI remains a separate increment
 (#0011 P1b); versioned migrations and ORM constraint alignment are delivered
 with #0004.
+
+## Tenant scope and consistency increment (#0004, #0009 remainder)
+
+Every list/detail/comment/transition/mutation route now requires an explicit
+`tenant_id` and answers 404 for environment, asset, import or finding IDs that
+belong to another client (`backend/app/api/scope.py`). Child rows (asset moves,
+finding status history, finding comments) carry `tenant_id` NOT NULL and all
+child tables gained composite `(id, tenant_id)` foreign keys; helper unique
+indexes support the composite targets. `db/migrations/0002_tenant_consistency.sql`
+backfills legacy rows on populated volumes and is idempotent;
+`db/migrations/README.md` records the versioned-migration policy (schema.sql
+stays the fresh-install truth). `models.py` is aligned 1:1 with schema.sql
+(CHECK, UNIQUE and named composite FKs) and
+`test_schema_orm_parity_postgres.py` compares both catalogs automatically.
+
+Verification: regressions written first (observed failing: 4 failed + 4 errors),
+then standard suite 25 passed / 18 optional DB cases skipped and PostgreSQL
+suite 43 passed (migration on a reshaped populated volume with legacy
+history/comments/moves, idempotent re-run, cross-tenant child rejection, ORM
+catalog parity). Migration applied to the real development volume: backfill
+verified and the FK catalog matched a fresh schema.sql database exactly.
+Two-tenant live end-to-end run passed 25/25 checks (upload → import completed →
+scoped findings/dashboard/report; cross-scope 4xx; per-finding decisions leave
+the other client untouched); temporary clients removed afterwards. Known issue
+#0025 reproduced live (502 after API recreation) and recovered with
+`docker compose restart frontend`; its fix remains a separate increment.

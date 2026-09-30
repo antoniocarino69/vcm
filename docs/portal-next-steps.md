@@ -97,10 +97,24 @@ unverified and open; the broader redesign is not complete.
 
 ## B. Client/environment scope and management — #0004, #0009, #0011 P1b
 
-- [ ] Harden API scope for every list, detail, comment, status change and bulk action;
+- [x] Harden API scope for every list, detail, comment, status change and bulk action;
   validate that environment, asset, import and finding belong to the selected client.
-- [ ] Add tenant consistency migrations and regression tests with two clients,
+  — `8600233` on `fix/0004-tenant-scope-migrations`; every existing list/detail/
+  comment/transition/mutation route requires an explicit `tenant_id` and answers
+  404 on cross-client IDs. Bulk actions do not exist yet; their increment must
+  re-validate tenant ownership per selected ID.
+- [x] Add tenant consistency migrations and regression tests with two clients,
   including child history/comments and existing populated volumes.
+  — `3ef1d37`, `401920c` on `fix/0004-tenant-scope-migrations`;
+  `db/migrations/0002_tenant_consistency.sql` backfills `tenant_id` on
+  asset_moves/finding_status_history/finding_comments and adds composite
+  `(id, tenant_id)` foreign keys on every child table. Regression suite covers
+  a populated pre-migration volume with legacy history rows, idempotent
+  re-runs, cross-tenant child rejection and ORM<->schema.sql catalog parity
+  (`test_schema_orm_parity_postgres.py`). Applied on the real volume: backfill
+  verified and 18+4 FK names match a fresh schema.sql catalog exactly.
+  Two-tenant end-to-end live run: 25/25 checks (upload -> import completed ->
+  scoped findings/dashboard/report, cross-scope 4xx, per-finding decisions).
 - [x] Support partial edits for client/environment metadata without resetting
   omitted fields. Handle duplicates/invalid values as meaningful 4xx responses —
   `9c1631d` on `fix/0009-patch-contracts`; PATCH tenants/environments/assets apply only
