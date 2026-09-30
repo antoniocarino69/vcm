@@ -80,3 +80,19 @@ Implementation published as `c4346e0` on `feature/0019-shared-portal-shell`
 with the remote hash verified. Asset/finding UI and
 broader #0019 acceptance remain open. During rebuild, nginx needed a restart to
 resolve the recreated API's address; deployment follow-up is tracked in #0025.
+
+## Scoped asset inventory increment (#0013, #0021)
+
+The shared sidebar now includes Assets. `/assets.html` supports client/current-
+environment scope, server-side OS/identity/asset-tag filters, stable sorting,
+counts and pagination. `/asset.html` shows identities/current attributes, retained
+finding snapshots, environment moves and proven latest/closure import references.
+Returning restores the list query/page/focus. See [contract and previews](asset-inventory.md).
+
+Standard suite: 24 passed / 9 optional DB cases skipped; PostgreSQL suite: 33 passed.
+Four mocked browser suites and the real two-client Nessus/Qualys upload → completed
+import → assets/findings → dashboard/report flow passed, including live asset
+browser navigation and HTTP scope/validation checks. Temporary test clients removed.
+Publication pending on `feature/0013-scoped-asset-inventory`.
+Asset mutations, finding decisions, complete observation history and broader
+OS/tag/export filtering remain separate increments.

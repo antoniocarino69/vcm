@@ -8,7 +8,7 @@ import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from .api import dashboards, findings, imports, reports, tenants
+from .api import assets, dashboards, findings, imports, reports, tenants
 
 app = FastAPI(
     title="VCM — Vulnerability & Compliance Management",
@@ -18,6 +18,7 @@ app = FastAPI(
 )
 
 app.include_router(tenants.router)
+app.include_router(assets.router)
 app.include_router(imports.router)
 app.include_router(findings.router)
 app.include_router(dashboards.router)

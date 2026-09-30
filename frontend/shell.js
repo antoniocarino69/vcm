@@ -4,7 +4,7 @@ window.Portal = (() => {
   sidebar.id = 'app-sidebar';
   sidebar.innerHTML = `<a class="brand" data-scope-link href="/">VCM<span>Vulnerability & Compliance</span></a>
     <p class="nav-section">Operations</p><nav aria-label="Main navigation">
-    <a data-scope-link href="/">Overview</a><a data-scope-link href="/clients.html">Clients & environments</a></nav>
+    <a data-scope-link href="/">Overview</a><a data-scope-link href="/clients.html">Clients & environments</a><a data-scope-link href="/assets.html">Assets</a></nav>
     <p class="sidebar-footer">Operational portal</p>`;
   document.body.prepend(sidebar);
   const skip = document.createElement('a');
@@ -30,7 +30,7 @@ window.Portal = (() => {
     if (!sidebar.contains(event.target) && !toggle.contains(event.target)) close();
   });
   for (const link of sidebar.querySelectorAll('nav a')) {
-    if (new URL(link.href).pathname === location.pathname) link.setAttribute('aria-current','page');
+    if (new URL(link.href).pathname === (location.pathname === '/asset.html' ? '/assets.html' : location.pathname)) link.setAttribute('aria-current','page');
   }
   function scope(client, environment = null) {
     const url = new URL(location.href);

@@ -12,3 +12,15 @@ Update each completed increment with its commit/PR, real verification and push.
 
 ## Status
 - Open
+
+## First asset-filter increment — 2026-09-30
+
+- Current asset OS substring, explicit Windows/Linux marker families, Unknown,
+  identity search and AND-combined asset key/key:value tags implemented before
+  pagination. Filters/chips/sort/page persist in inventory/detail/back URLs.
+- PostgreSQL tests cover differing/missing OS, literal wildcards, overlapping
+  client tags, moved assets and filtering before pages. Live Nessus Ubuntu and
+  Windows records verified. See `docs/asset-inventory.md`.
+- Publication pending on `feature/0013-scoped-asset-inventory`.
+- Finding OS/tag filters, other tag sources, observations/date/campaign filtering
+  and matching exports remain open; the complete issue is not delivered.
