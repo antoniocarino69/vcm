@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finding — VCM</title><link rel="stylesheet" href="portal.css">
+<script src="shell.js" defer></script><script src="asset-context.js" defer></script><script src="finding.js" defer></script></head>
+<body><main>
+<div class="page-heading"><p class="eyebrow">Operations / Findings / Detail</p><h1 id="finding-title">Finding</h1><p id="finding-subtitle"></p></div>
+<p><a id="back-link" href="/vulnerabilities.html">← Back to findings</a></p>
+<p id="page-error" class="error" role="alert" hidden></p>
+<p id="detail-status" role="status">Loading finding…</p>
+<div class="workspace">
+  <section class="panel" aria-labelledby="context-heading">
+    <div class="panel-heading"><h2 id="context-heading">Asset context</h2><span id="status-badge"></span></div>
+    <div class="table-scroll"><table><tbody id="context-rows"></tbody></table></div>
+    <p class="hint">The finding stays tied to the environment snapshot taken at observation time.</p>
+  </section>
+  <section class="panel" aria-labelledby="evidence-heading">
+    <div class="panel-heading"><h2 id="evidence-heading">Rule and evidence</h2></div>
+    <div class="table-scroll"><table><tbody id="evidence-rows"></tbody></table></div>
+    <h3>Scanner output</h3>
+    <pre id="scanner-output" class="evidence" aria-label="Scanner evidence"></pre>
+  </section>
+</div>
+<div class="workspace">
+  <section class="panel" aria-labelledby="decision-heading">
+    <div class="panel-heading"><h2 id="decision-heading">Decision</h2></div>
+    <p class="hint">This decision applies only to this finding (one asset, one rule, one port). Other servers and ports keep their own status.</p>
+    <form id="decision-form">
+      <label for="decision-status">Status</label>
+      <select id="decision-status"><option value="active">Open</option><option value="mitigated">Mitigated</option><option value="false_positive">False positive</option><option value="risk_accepted">Risk accepted</option></select>
+      <label for="decision-reason">Reason <span id="reason-requirement" class="muted">(optional)</span></label>
+      <textarea id="decision-reason" rows="2" maxlength="2000" placeholder="Why this status applies"></textarea>
+      <label for="decision-expiry">Acceptance expiry <span class="muted">(optional, risk acceptance only)</span></label>
+      <input id="decision-expiry" type="date">
+      <label for="decision-author">Changed by</label>
+      <input id="decision-author" maxlength="200" placeholder="analyst">
+      <p id="decision-error" class="error" role="alert" hidden></p>
+      <button type="submit">Save decision</button>
+    </form>
+  </section>
+  <section class="panel" aria-labelledby="comments-heading">
+    <div class="panel-heading"><h2 id="comments-heading">Comments</h2></div>
+    <form id="comment-form">
+      <label for="comment-author">Author</label>
+      <input id="comment-author" maxlength="200" value="analyst">
+      <label for="comment-body">Comment</label>
+      <textarea id="comment-body" rows="2" maxlength="4000" required></textarea>
+      <p id="comment-error" class="error" role="alert" hidden></p>
+      <button type="submit">Add comment</button>
+    </form>
+    <div id="comment-list"></div>
+  </section>
+</div>
+<section class="panel" aria-labelledby="history-heading">
+  <div class="panel-heading"><h2 id="history-heading">Status history</h2></div>
+  <div class="table-scroll"><table><thead><tr><th>When (UTC)</th><th>Change</th><th>Reason</th><th>By</th></tr></thead><tbody id="history-rows"></tbody></table></div>
+</section>
+</main></body></html>

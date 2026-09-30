@@ -1,12 +1,13 @@
 'use strict';
 window.AssetPortal = (() => {
   const node = id => document.getElementById(id);
-  async function request(path) {
-    const response = await fetch('/api' + path);
+  async function request(path, payload, method = 'POST') {
+    const response = await fetch('/api' + path, payload === undefined ? {} : {
+      method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)});
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
       throw new Error(response.status >= 500 ? 'The server could not load this view. Please retry.' :
-        typeof body.detail === 'string' ? body.detail : `Request failed (${response.status}). Check the filters.`);
+        typeof body.detail === 'string' ? body.detail : `Request failed (${response.status}). Check the input values.`);
     }
     return response.json();
   }

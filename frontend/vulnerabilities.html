@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vulnerabilities — VCM</title><link rel="stylesheet" href="portal.css">
+<script src="shell.js" defer></script><script src="asset-context.js" defer></script><script src="vulnerabilities.js" defer></script></head>
+<body><main>
+<div class="page-heading"><p class="eyebrow">Operations / Findings</p><h1>Vulnerabilities</h1><p>One row per finding on one asset and one port. Decisions always apply to a single row.</p></div>
+<p id="page-error" class="error" role="alert" hidden></p>
+<div class="scope-controls"><div><label for="tenant">Client</label><select id="tenant" disabled><option>Loading clients…</option></select></div><div><label for="environment">Environment</label><select id="environment" disabled><option value="">All environments</option></select></div></div>
+<form id="filters" class="inventory-filters">
+<div><label for="search">Rule, CVE or description</label><input id="search" maxlength="200" placeholder="e.g. TLS or CVE-2026"></div>
+<div><label for="status">Status</label><select id="status"><option value="active">Open</option><option value="mitigated">Mitigated</option><option value="false_positive">False positive</option><option value="risk_accepted">Risk accepted</option><option value="all">All statuses</option></select></div>
+<div><label for="severity">Severity</label><select id="severity"><option value="">Any severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option><option value="info">Info</option></select></div>
+<div><label for="scanner">Scanner</label><select id="scanner"><option value="">Any scanner</option><option value="qualys_vmdr">Qualys VMDR</option><option value="tenable_nessus">Tenable Nessus</option><option value="scc_xccdf">DISA SCC</option><option value="pingcastle">PingCastle</option><option value="purple_knight">Purple Knight</option></select></div>
+<div><label for="kind">Finding type</label><select id="kind"><option value="">All types</option><option value="vulnerability">Vulnerability</option><option value="compliance">Compliance</option></select></div>
+<div><label for="limit">Rows per page</label><select id="limit"><option>25</option><option selected>50</option><option>100</option></select></div>
+<div class="filter-actions"><button type="submit">Apply filters</button><button id="clear" type="button" class="secondary">Clear filters</button></div>
+</form>
+<p class="hint">Rows are findings in their retained environment snapshot; filters apply before pagination. Finding type Compliance covers STIG/SCC and AD tool results.</p>
+<div id="filter-chips" class="filter-chips" aria-label="Active filters"></div>
+<section class="panel inventory-panel" aria-label="Finding list">
+<p id="list-status" role="status">Select a client to load findings.</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="Finding table"><table><thead><tr><th>Environment</th><th>Asset</th><th>Operating system</th><th>Rule / CVE</th><th>Severity</th><th>Status</th><th>Asset tags</th><th>Scanner</th><th>Port</th><th>First seen (UTC)</th><th>Last seen (UTC)</th><th>Action</th></tr></thead><tbody id="finding-rows"></tbody></table></div>
+<div class="pagination"><button id="previous" type="button" class="secondary" disabled>Previous</button><span id="page-position"></span><button id="next" type="button" class="secondary" disabled>Next</button></div>
+</section></main></body></html>
