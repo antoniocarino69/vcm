@@ -2,6 +2,8 @@
 riapertura, transizioni di stato. Repository in memoria (no DB)."""
 import copy
 
+import pytest
+
 from conftest import fixture
 
 from app.parsers import get_parser
@@ -152,6 +154,36 @@ def test_reopen_on_reappearance():
     assert row["status"] == "active" and row["closed_at"] is None
     assert stats.reopened == 1
     assert repo.status_history[-1]["to"] == "active"
+
+
+@pytest.mark.parametrize("status", ["risk_accepted", "false_positive"])
+@pytest.mark.parametrize("auto_close", [False, True])
+def test_reimport_preserves_manual_triage(status, auto_close):
+    """Il reimport conserva il triage manuale aggiornando le evidenze."""
+    repo = InMemoryRepo()
+    ingest_stream(repo, iter([_host("10.0.0.1", _finding("Q1", 443))]),
+                  TENANT, ENV, "import-1")
+    row = next(iter(repo.findings.values()))
+    transition_status(repo, row, status, "Decisione dell'analista",
+                      "2026-12-31" if status == "risk_accepted" else None,
+                      None, "analyst")
+    before = copy.deepcopy(row)
+    history = copy.deepcopy(repo.status_history)
+
+    stats = ingest_stream(
+        repo, iter([_host("10.0.0.1", _finding("Q1", 443, severity="critical"))]),
+        TENANT, ENV, "import-2", auto_close=auto_close)
+
+    assert len(repo.findings) == 1
+    assert row["status"] == status
+    assert row["status_reason"] == before["status_reason"]
+    assert row["closed_at"] == before["closed_at"]
+    assert row.get("risk_accepted_until") == before.get("risk_accepted_until")
+    assert row["severity"] == "critical"
+    assert row["last_import_id"] == "import-2"
+    assert row["occurrence_count"] == 2
+    assert stats.updated == 1 and stats.reopened == 0 and stats.auto_closed == 0
+    assert repo.status_history == history
 
 
 def test_plan_auto_close_pure():

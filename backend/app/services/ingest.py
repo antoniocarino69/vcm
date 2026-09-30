@@ -120,7 +120,7 @@ def merge_incoming(existing: dict[str, Any], finding: NormalizedFinding,
             changes["affected_objects"] = merged
 
     # Riapertura: un finding mitigato che ricompare torna Active
-    if existing.get("status") and existing["status"] != "active":
+    if existing.get("status") == "mitigated":
         changes.update({
             "status": "active",
             "closed_at": None,
