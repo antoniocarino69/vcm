@@ -30,13 +30,26 @@
           <p id="client-error" class="error" role="alert" hidden></p>
           <button type="submit">Create client</button>
         </form>
+        <form id="client-edit-form">
+          <h3>Edit selected client</h3>
+          <fieldset id="client-edit-fields" disabled>
+            <label for="client-edit-name">Client name</label>
+            <input id="client-edit-name" name="edit-name" required maxlength="200">
+            <label for="client-edit-slug">Client key</label>
+            <input id="client-edit-slug" name="edit-slug" required maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" aria-describedby="slug-help">
+            <label for="client-edit-description">Client description</label>
+            <textarea id="client-edit-description" name="edit-description" rows="2" maxlength="2000"></textarea>
+            <button type="submit">Save client changes</button>
+          </fieldset>
+          <p id="client-edit-error" class="error" role="alert" hidden></p>
+        </form>
       </section>
       <section class="panel" aria-labelledby="environments-heading">
         <div class="panel-heading"><h2 id="environments-heading">Environments</h2><span id="environment-count" class="badge">0</span></div>
         <h3 id="selected-name">Select a client</h3>
         <p id="selected-description" class="muted"></p>
         <p id="environment-status" role="status" class="muted">Select a client to view or create environments.</p>
-        <div class="table-scroll"><table id="environment-table" hidden><thead><tr><th>Name</th><th>Type</th><th>Asset matching</th></tr></thead><tbody id="environment-list"></tbody></table></div>
+        <div class="table-scroll"><table id="environment-table" hidden><thead><tr><th>Name</th><th>Type</th><th>Asset matching</th><th>Actions</th></tr></thead><tbody id="environment-list"></tbody></table></div>
         <form id="environment-form">
           <h3>Create an environment</h3>
           <fieldset id="environment-fields" disabled>
@@ -50,6 +63,20 @@
             <button type="submit">Create environment</button>
           </fieldset>
           <p id="environment-error" class="error" role="alert" hidden></p>
+        </form>
+        <form id="environment-edit-form" hidden>
+          <h3>Edit environment</h3>
+          <fieldset id="environment-edit-fields">
+            <label for="environment-edit-name">Name</label>
+            <input id="environment-edit-name" name="edit-name" required maxlength="200">
+            <div class="field-row">
+              <div><label for="environment-edit-kind">Type</label><select id="environment-edit-kind" name="edit-kind"><option value="production">Production</option><option value="dmz">DMZ</option><option value="active_directory">Active Directory</option><option value="staging">Staging</option><option value="cloud">Cloud</option><option value="ot">Operational technology</option><option value="other">Other</option></select></div>
+              <div><label for="environment-edit-match">Match assets by</label><select id="environment-edit-match" name="edit-match_key"><option value="ip">IP address</option><option value="fqdn">FQDN</option><option value="netbios">NetBIOS name</option></select></div>
+            </div>
+            <button type="submit">Save environment changes</button>
+            <button type="button" id="environment-edit-cancel" class="secondary">Cancel</button>
+          </fieldset>
+          <p id="environment-edit-error" class="error" role="alert" hidden></p>
         </form>
       </section>
     </div>

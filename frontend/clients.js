@@ -4,15 +4,16 @@ const kinds = {production:'Production', dmz:'DMZ', active_directory:'Active Dire
 const matchKeys = {ip:'IP address', fqdn:'FQDN', netbios:'NetBIOS name'};
 let clients = [], environments = [], selectedClient = null, scopeVersion = 0;
 let loadingClients = false, savingClient = false, savingEnvironment = false, slugEdited = false, environmentsLoaded = false;
+let editingEnvironment = null;
 
 function message(id, text = '') {
   element(id).textContent = text;
   element(id).hidden = !text;
 }
 
-async function request(path, payload) {
+async function request(path, payload, method = 'POST') {
   const response = await fetch(`/api${path}`, payload === undefined ? {} : {
-    method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    method, headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload)
   });
   if (!response.ok) {
     if (response.status >= 500) throw new Error('The server could not complete the request. Refresh and try again.');
@@ -37,9 +38,54 @@ function renderClients() {
   element('client-list-status').textContent = clients.length ? `${clients.length} client${clients.length === 1 ? '' : 's'}` : 'No clients yet. Create your first client below.';
 }
 
+function populateClientEdit() {
+  const client = selectedClient;
+  element('client-edit-fields').disabled = !client;
+  element('client-edit-name').value = client?.name || '';
+  element('client-edit-slug').value = client?.slug || '';
+  element('client-edit-description').value = client?.description || '';
+  message('client-edit-error');
+}
+
+function closeEnvironmentEdit() {
+  editingEnvironment = null;
+  element('environment-edit-form').hidden = true;
+  message('environment-edit-error');
+}
+
+function openEnvironmentEdit(env) {
+  editingEnvironment = {id: env.id, tenantId: env.tenant_id, original: {...env}};
+  element('environment-edit-name').value = env.name;
+  element('environment-edit-kind').value = env.kind;
+  element('environment-edit-match').value = env.match_key;
+  message('environment-edit-error');
+  element('environment-edit-form').hidden = false;
+  element('environment-edit-name').focus();
+}
+
+function renderEnvironments() {
+  element('environment-list').replaceChildren();
+  for (const env of environments) {
+    const row = document.createElement('tr');
+    for (const value of [env.name, kinds[env.kind] || env.kind, matchKeys[env.match_key] || env.match_key]) {
+      const cell = document.createElement('td'); cell.textContent = value; row.append(cell);
+    }
+    const actions = document.createElement('td');
+    const edit = document.createElement('button');
+    edit.type = 'button'; edit.className = 'secondary'; edit.textContent = 'Edit';
+    edit.onclick = () => openEnvironmentEdit(env);
+    actions.append(edit); row.append(actions);
+    element('environment-list').append(row);
+  }
+  element('environment-count').textContent = String(environments.length);
+  element('environment-table').hidden = !environments.length;
+}
+
 async function selectClient(client) {
   selectedClient = client; environments = []; environmentsLoaded = false;
   const version = ++scopeVersion;
+  closeEnvironmentEdit();
+  populateClientEdit();
   renderClients();
   element('selected-name').textContent = client?.name || 'Select a client';
   element('selected-description').textContent = client?.description || '';
@@ -61,15 +107,7 @@ async function selectClient(client) {
     Portal.scope(client, rows.find(env => env.id === requestedEnvironment));
     environments = rows;
     environmentsLoaded = true;
-    for (const env of rows) {
-      const row = document.createElement('tr');
-      for (const value of [env.name, kinds[env.kind] || env.kind, matchKeys[env.match_key] || env.match_key]) {
-        const cell = document.createElement('td'); cell.textContent = value; row.append(cell);
-      }
-      element('environment-list').append(row);
-    }
-    element('environment-count').textContent = String(rows.length);
-    element('environment-table').hidden = !rows.length;
+    renderEnvironments();
     element('environment-status').textContent = rows.length ? 'Environments belonging to this client.' : 'No environments yet. Create one below.';
     element('environment-fields').disabled = savingEnvironment;
   } catch (error) {
@@ -119,6 +157,46 @@ element('client-form').onsubmit = async event => {
   finally { savingClient = false; submit.disabled = false; }
 };
 
+element('client-edit-form').onsubmit = async event => {
+  event.preventDefault();
+  const client = selectedClient;
+  if (!client || savingClient || loadingClients) return;
+  message('client-edit-error'); message('notice');
+  const name = element('client-edit-name').value.trim();
+  const slug = element('client-edit-slug').value.trim();
+  const description = element('client-edit-description').value.trim() || null;
+  if (!name) return message('client-edit-error', 'Enter a client name.');
+  const changes = {};
+  if (name !== client.name) changes.name = name;
+  if (slug !== client.slug) changes.slug = slug;
+  if (description !== (client.description || null)) changes.description = description;
+  if (!Object.keys(changes).length) return message('notice', 'No changes to save.');
+  if (changes.slug && clients.some(item => item.slug === slug && item.id !== client.id)) {
+    return message('client-edit-error', 'A client with this slug already exists');
+  }
+  const targetId = client.id;
+  savingClient = true;
+  const submit = event.target.querySelector('button[type=submit]'); submit.disabled = true;
+  try {
+    const updated = await request(`/tenants/${targetId}`, changes, 'PATCH');
+    const stored = clients.find(item => item.id === targetId);
+    if (stored) Object.assign(stored, updated);
+    renderClients();
+    // Never let a late response touch a different client's editing state.
+    if (selectedClient?.id === targetId) {
+      selectedClient = stored || selectedClient;
+      element('selected-name').textContent = selectedClient.name;
+      element('selected-description').textContent = selectedClient.description || '';
+      populateClientEdit();
+    }
+    message('notice', 'Client updated.');
+  } catch (error) {
+    message('client-edit-error', error.message);
+  } finally {
+    savingClient = false; submit.disabled = false;
+  }
+};
+
 element('environment-form').onsubmit = async event => {
   event.preventDefault();
   if (!selectedClient || savingEnvironment) return;
@@ -144,5 +222,39 @@ element('environment-form').onsubmit = async event => {
     element('environment-fields').disabled = !environmentsLoaded;
   }
 };
+
+element('environment-edit-form').onsubmit = async event => {
+  event.preventDefault();
+  const edit = editingEnvironment;
+  if (!edit || savingEnvironment) return;
+  message('environment-edit-error'); message('notice');
+  const name = element('environment-edit-name').value.trim();
+  if (!name) return message('environment-edit-error', 'Enter an environment name.');
+  const changes = {};
+  if (name !== edit.original.name) changes.name = name;
+  const kind = element('environment-edit-kind').value;
+  if (kind !== edit.original.kind) changes.kind = kind;
+  const matchKey = element('environment-edit-match').value;
+  if (matchKey !== edit.original.match_key) changes.match_key = matchKey;
+  if (!Object.keys(changes).length) return message('notice', 'No changes to save.');
+  savingEnvironment = true;
+  const submit = event.target.querySelector('button[type=submit]'); submit.disabled = true;
+  try {
+    const updated = await request(`/environments/${edit.id}?tenant_id=${edit.tenantId}`, changes, 'PATCH');
+    if (selectedClient?.id === edit.tenantId) {
+      const row = environments.find(item => item.id === edit.id);
+      if (row) Object.assign(row, updated);
+      renderEnvironments();
+    }
+    closeEnvironmentEdit();
+    message('notice', 'Environment updated.');
+  } catch (error) {
+    message('environment-edit-error', error.message);
+  } finally {
+    savingEnvironment = false; submit.disabled = false;
+  }
+};
+
+element('environment-edit-cancel').onclick = closeEnvironmentEdit;
 
 loadClients();
