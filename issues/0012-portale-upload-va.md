@@ -18,3 +18,24 @@ See `docs/portal-next-steps.md`, section D. Scan upload, optional dating and tag
 The current request includes a shared sidebar, per-asset finding decisions,
 OS/tag filtering and optional pre-upload dates/tags; proposals require scoped
 API/schema increments before being presented as implemented behavior.
+
+## Upload UI increment — 2026-10-01
+
+Implemented on `feature/0012-report-upload`: `/imports.html`, shared sidebar
+entry, validated client/environment selection, scanner detection or canonical
+scanner selection, file upload, auto-close off by default, asynchronous status
+polling, completion statistics, worker errors, import history and links to the
+environment assets/findings. Recoverable upload errors retain the file/settings.
+Late upload responses cannot replace a newly selected client's status.
+
+Verification: new Chromium regression observed failing before implementation;
+passes multipart tenant/auto-close assertions, completion, worker error display,
+late upload response isolation and 390px layout. All six existing browser suites
+pass. Standard backend suite: 25 passed / 23 optional DB cases skipped; opt-in
+PostgreSQL suite: 48 passed. Stack rebuilt; frontend restarted for known #0025.
+Live Chromium: Nessus UI upload → Celery completed → findings → dashboard →
+history after reload → duplicate 409. Temporary verification clients removed;
+report files remain only in Docker storage.
+
+Issue stays open: optional assessment dates/tags (#0020), all-scanner verification,
+backend robustness (#0006), and AD/compliance follow-ups (#0005/#0007).

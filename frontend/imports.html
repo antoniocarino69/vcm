@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Scan imports — VCM</title><link rel="stylesheet" href="portal.css"><script src="shell.js" defer></script><script src="imports.js" defer></script></head><body><main>
+<div class="page-heading"><h1>Scan imports</h1><p>Upload a scanner report and follow asynchronous processing.</p></div>
+<section class="panel"><h2>Upload report</h2><form id="upload-form">
+<label for="tenant">Client</label><select id="tenant" required><option value="">Select a client</option></select>
+<label for="environment">Environment</label><select id="environment" required disabled><option value="">Select an environment</option></select>
+<fieldset id="upload-fields" disabled><label for="scanner">Scanner</label><select id="scanner"><option value="auto">Detect automatically</option><option value="qualys_vmdr">Qualys VMDR</option><option value="tenable_nessus">Tenable Nessus</option><option value="scc_xccdf">DISA SCC / XCCDF</option><option value="pingcastle">PingCastle</option><option value="purple_knight">Purple Knight</option></select>
+<label for="file">Report file</label><input id="file" type="file" required>
+<label><input id="auto-close" type="checkbox"> Close missing findings on hosts present in this report</label><p class="hint">Enable only for a complete assessment. Applies to this scanner and environment.</p><button id="upload" type="submit">Upload report</button></fieldset></form>
+<p id="progress" role="status" aria-live="polite"></p><p id="results" hidden><a id="result-assets">View environment assets</a> · <a id="result-findings">View environment findings</a></p><p id="error" class="error" role="alert"></p></section>
+<section class="panel"><div class="panel-heading"><h2>Import history</h2><button id="refresh" class="secondary" type="button">Refresh</button></div><p id="history-status" role="status">Select a client and environment.</p><div class="table-scroll" tabindex="0" role="region" aria-label="Import history"><table><thead><tr><th>Uploaded at</th><th>Filename</th><th>Scanner</th><th>Status</th><th>Results / error</th></tr></thead><tbody id="history"></tbody></table></div></section>
+</main></body></html>

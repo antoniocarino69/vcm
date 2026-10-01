@@ -1,0 +1,31 @@
+const assert=require('node:assert/strict');
+const {chromium}=require('playwright');
+(async()=>{const browser=await chromium.launch({args:['--no-sandbox']});try{
+const page=await browser.newPage();let posted=false, fail=false, hold=false, release; const delayed=new Promise(resolve=>{release=resolve;});
+await page.route('**/api/**',async route=>{const req=route.request(),u=new URL(req.url());let data;
+if(u.pathname==='/api/tenants')data=[{id:'a',name:'Client A'},{id:'b',name:'Client B'}];
+else if(u.pathname.includes('/tenants/'))data=[{id:'env-'+u.pathname.split('/')[3],name:'Production'}];
+else if(req.method()==='POST'){if(hold)await delayed;const body=req.postDataBuffer().toString();assert(body.includes('name="tenant_id"\r\n\r\na'));assert(body.includes('name="auto_close"\r\n\r\nfalse'));posted=true;data={import_id:'scan-a'};}
+else if(u.pathname==='/api/imports/scan-a')data=fail?{status:'failed',error:'Scanner parse failure'}:{status:'completed',stats:{created:2}};
+else data=[];
+await route.fulfill({status:req.method()==='POST'?202:200,contentType:'application/json',body:JSON.stringify(data)});});
+await page.goto('http://127.0.0.1:8080/imports.html');
+await page.locator('#tenant').selectOption('a');await page.locator('#environment').selectOption('env-a');
+await page.locator('#file').setInputFiles({name:'report.nessus',mimeType:'text/xml',buffer:Buffer.from('<report/>')});
+await page.getByRole('button',{name:'Upload report',exact:true}).click();
+await page.getByText('Import completed').waitFor();assert(posted);assert((await page.locator('#progress').textContent()).includes('2'));
+fail=true;
+await page.locator('#file').setInputFiles({name:'broken.xml',mimeType:'text/xml',buffer:Buffer.from('<broken/>')});
+await page.getByRole('button',{name:'Upload report',exact:true}).click();
+await page.getByText('Scanner parse failure',{exact:true}).waitFor();
+hold=true;
+await page.locator('#file').setInputFiles({name:'delayed.xml',mimeType:'text/xml',buffer:Buffer.from('<delayed/>')});
+const pending=page.waitForRequest(r=>r.method()==='POST');
+await page.getByRole('button',{name:'Upload report',exact:true}).click();await pending;
+await page.locator('#tenant').selectOption('b');await page.locator('#environment').selectOption('env-b');
+release();await page.waitForLoadState('networkidle');
+assert.equal(await page.locator('#error').textContent(),'');assert.equal(await page.locator('#progress').textContent(),'');
+assert((await page.locator('#scope-summary').textContent()).includes('Client B'));
+await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+console.log('PASS upload: scoped multipart, auto-close off, polling completion, mobile');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

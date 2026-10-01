@@ -4,7 +4,7 @@ window.Portal = (() => {
   sidebar.id = 'app-sidebar';
   sidebar.innerHTML = `<a class="brand" data-scope-link href="/">VCM<span>Vulnerability & Compliance</span></a>
     <p class="nav-section">Operations</p><nav aria-label="Main navigation">
-    <a data-scope-link href="/">Overview</a><a data-scope-link href="/clients.html">Clients & environments</a><a data-scope-link href="/assets.html">Assets</a><a data-scope-link href="/vulnerabilities.html">Vulnerabilities</a></nav>
+    <a data-scope-link href="/">Overview</a><a data-scope-link href="/clients.html">Clients & environments</a><a data-scope-link href="/assets.html">Assets</a><a data-scope-link href="/vulnerabilities.html">Vulnerabilities</a><a data-scope-link href="/imports.html">Scan imports</a></nav>
     <p class="sidebar-footer">Operational portal</p>`;
   document.body.prepend(sidebar);
   const skip = document.createElement('a');
