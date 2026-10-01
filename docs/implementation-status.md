@@ -28,8 +28,9 @@ longer pending review.
 
 The portal is published on `0.0.0.0:8080`. No authentication was added.
 Client/environment editing is delivered (#0011 P1b); client archiving behavior
-is defined but intentionally not exposed yet. Campaigns, finding
-triage UI and upload UI remain separate planned increments.
+is defined but intentionally not exposed yet. Individual finding triage is delivered on the current working branch. Basic
+report upload is delivered by the increment below; campaigns and optional
+import metadata remain open. These later branches are not merged into main.
 
 ## Verification commands
 
@@ -66,7 +67,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 API scope hardening and database tenant constraints are delivered (#0004).
 Creation and edits use validated endpoints with 404/409/422 handling (#0009);
-portal editing UI remains #0011 P1b. AD fallback, upload robustness and
+portal editing UI is delivered (#0011 P1b). AD fallback, upload robustness and
 compliance lifecycle fixes remain #0005–#0007. No milestone is marked complete
 solely because its first increment is delivered.
 
@@ -190,3 +191,26 @@ PostgreSQL including per-asset and per-port decision independence; the new
 pass; a live run uploaded a real Qualys export and accepted QID 105575 on one
 server through the portal while the sibling server's finding stayed active.
 Bulk actions remain a separate increment (#0014 P3c).
+
+## Basic report upload increment (#0012)
+
+`/imports.html` is accessible from Scan imports in the shared sidebar. Select
+a client/environment, scanner or automatic detection, and a report file.
+Auto-close is off by default. The page polls asynchronous imports, shows
+completion statistics and worker errors, lists import history, and links to
+the selected environment's assets/findings. Late upload responses are discarded
+after a scope change; recoverable upload errors retain file/settings.
+
+Verification on 2026-10-01: new browser regression failed before implementation,
+then passed scoped multipart fields, opt-in auto-close, completion/error states,
+stale upload isolation and mobile layout. Six existing browser suites pass;
+backend standard suite 25 passed / 23 skipped and PostgreSQL suite 48 passed.
+Real stack rebuilt; live Chromium Nessus upload completed through Celery, with
+findings/dashboard/history and duplicate 409 verified. Temporary clients removed.
+Optional date/tag metadata and #0005–#0007 prerequisites remain open; this is a
+completed basic UI increment, not completion of the entire upload milestone.
+
+[Repository/publication audit and focused review](review-2026-10-01.md).
+
+Published implementation: `1fec063` on `feature/0012-report-upload`; remote
+branch hash matches the local commit. Main was not changed.

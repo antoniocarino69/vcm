@@ -189,6 +189,12 @@ from an aggregate AD score. Add a target-type distinction where evidence warrant
 
 ## D. Scan upload, optional dating and tagging — #0012, #0020
 
+- [x] Deliver the basic upload UI with client/environment/scanner/file selection,
+  opt-in auto-close, asynchronous status/statistics/errors, import history and
+  links to environment assets/findings — `feature/0012-report-upload`; Chromium
+  regression and live Nessus upload → completed → findings/dashboard verified
+  on 2026-10-01. Published implementation `1fec063`, remote hash verified. Optional metadata and backend prerequisites below remain open.
+
 - [ ] Complete upload prerequisites: streaming size/hash handling, scanner aliases,
   meaningful errors, reliable dispatch/retries and corrected AD/compliance paths
   (#0005–#0007). Keep auto-close opt-in.

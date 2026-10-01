@@ -39,3 +39,7 @@ report files remain only in Docker storage.
 
 Issue stays open: optional assessment dates/tags (#0020), all-scanner verification,
 backend robustness (#0006), and AD/compliance follow-ups (#0005/#0007).
+
+Publication: implementation `1fec063` pushed to `origin/feature/0012-report-upload`;
+remote hash verified against the local commit. The branch is based on published
+`dd40dc1`; merging into main remains a separate reviewed PR step.
